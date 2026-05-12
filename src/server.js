@@ -2,20 +2,18 @@ import express from 'express'
 import http from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
-
-const server = http.createServer((req, res) => {
-    // Set the response headers
-    res.writeHead(200, { 'Content-Type': 'text/html' });
-
-    // Write the response content
-    res.write('<h1>Hello, Node.js HTTP Server!</h1>');
-    res.end();
+import dotenv from 'dotenv'
+import usersRoute from './routes/users.js'
+dotenv.config()
+const app = express()
+// Example defining a route in Express
+app.get('/', (req, res) => {
+    res.send('<h1>Hello, Express.js Server!</h1>');
 });
 
-// Specify the port to listen on
-const port = 3345;
-
-// Start the server
-server.listen(port, () => {
-    console.log(`Node.js HTTP server is running on port ${port}`);
+// Example specifying the port and starting the server
+const port = process.env.PORT || 3000// You can use environment variables for port configuration
+app.use('/users', usersRoute)
+app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
 });
