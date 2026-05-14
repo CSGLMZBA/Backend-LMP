@@ -13,11 +13,11 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "index.js",
+  "main": "public/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js"
+    "start": "node public/server.js",
+    "dev": "nodemon public/server.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
