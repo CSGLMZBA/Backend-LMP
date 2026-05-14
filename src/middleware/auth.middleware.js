@@ -1,0 +1,34 @@
+import { verifyAccessToken } from '../utils/jwt.js';
+import { errorResponse } from '../utils/response.js';
+
+export const authMiddleware = (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+      return errorResponse(
+        res,
+        'Token requerido',
+        'TOKEN_REQUIRED',
+        [],
+        401
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+
+    const decoded = verifyAccessToken(token);
+
+    req.user = decoded;
+
+    next();
+  } catch (error) {
+    return errorResponse(
+      res,
+      'Token inválido',
+      'INVALID_TOKEN',
+      [],
+      401
+    );
+  }
+};
