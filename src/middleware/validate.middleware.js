@@ -1,13 +1,13 @@
 import { errorResponse } from '../utils/response.js';
 
-export const validate = (schema) => {
+export const validate = (schema, source = 'body') => {
   return (req, res, next) => {
-    const result = schema.safeParse(req.body);
+    const result = schema.safeParse(req[source]);
 
     if (!result.success) {
       return errorResponse(
         res,
-        'Datos inválidos',
+        'Invalid data',
         'VALIDATION_ERROR',
         result.error.errors,
         400
@@ -15,7 +15,6 @@ export const validate = (schema) => {
     }
 
     req.validatedData = result.data;
-
     next();
   };
 };

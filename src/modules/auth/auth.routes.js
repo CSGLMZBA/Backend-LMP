@@ -1,13 +1,10 @@
 import { Router } from 'express';
 
 import * as authController from './auth.controller.js';
-
+import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-
-import {
-  loginSchema,
-  registerSchema,
-} from './auth.schema.js';
+import { authorize } from '../../middleware/authorize.middleware.js';
+import { userSchema } from './auth.schema.js';
 
 
 
@@ -16,14 +13,31 @@ const router = Router();
 
 router.post(
   '/register',
-  validate(registerSchema),
+  validate(userSchema.register),
   authController.register
 );
 
 router.post(
   '/login',
-  validate(loginSchema),
+  validate(userSchema.login),
   authController.login
+);
+
+router.use(authMiddleware);
+
+router.patch(
+  '/:userId',
+  validate(userSchema.updateParams, 'params'),
+  validate(userSchema.update),
+  authorize.self(),
+  authController.update
+);
+
+router.delete(
+  '/:userId',
+  validate(userSchema.softDeleteParams, 'params'),
+  authorize.selfOrAdmin(),
+  authController.softDelete
 );
 
 export default router;

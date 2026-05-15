@@ -1,48 +1,61 @@
 import bcrypt from 'bcrypt'
-import {
-  createUser,
-  findUserByEmail,
-} from './auth.repository.js';
+import { userRepository } from './auth.repository.js';
 
 import { generateAccessToken } from '../../utils/jwt.js';
 
 import { env } from '../../config/env.js';
 
-export const register = async (data) => {
-  const existingUser = await findUserByEmail(data.email);
+const removeSensitiveFields = (user) => {
+  if (!user) return user
 
-  if (existingUser) {
-    throw new Error('EMAIL_ALREADY_EXISTS');
+  const clean = { ...user }
+  delete clean.passwordHash
+
+  return clean
+
+} 
+
+export const register = async (data) => {
+  let existingUser = await userRepository.findByEmail(data.email);
+
+  if (existingUser && existingUser.activo) {
+    throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
-  const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS); // Got rid of magic number for the salt rounds
+  existingUser = await userRepository.findByUserName(data.userName);
 
-  const user = await createUser({
-    nombre: data.nombre,
-    apaterno: data.apaterno,
-    amaterno: data.amaterno,
+  if (existingUser && existingUser.activo) {
+    throw new Error('USERNAME_ALREADY_IN_USE');
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    data.password,
+    Number(env.BCRYPT_SALT_ROUNDS)
+  );
+
+  const user = await userRepository.create({
+    displayName: data.displayName,
+    userName: data.userName,
     email: data.email,
-    password: hashedPassword,
+    passwordHash: hashedPassword,
     rol: 'cliente',
-    estado: 'activo',
+    activo: true,
     createdAt: new Date(),
   });
 
-  delete user.password;
-
-  return user;
+  return removeSensitiveFields(user);
 };
 
 export const login = async (data) => {
-  const user = await findUserByEmail(data.email);
+  const user = await userRepository.findByEmail(data.email);
 
-  if (!user) {
+  if (!user || !user.activo) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
   const validPassword = await bcrypt.compare(
-    data.password,
-    user.password
+  data.password,
+  user.passwordHash
   );
 
   if (!validPassword) {
@@ -61,4 +74,54 @@ export const login = async (data) => {
     user,
     token,
   };
+};
+
+export const update = async(id, payload) => {
+    const user = await userRepository.findById(id);
+
+    if (!user) {
+      throw createError('User not found', 404, 'USER_NOT_FOUND')
+    }
+    
+    const data = { ...payload }
+
+    if (payload.userName && payload.userName !== user.userName) {
+      const exists = await userRepository.findByUserName(payload.userName)
+
+      if (exists && exists.activo) {
+        throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
+      }
+    }
+    if (payload.email && payload.email !== user.email) {
+      const exists = await userRepository.findByEmail(payload.email)
+
+      if (exists && exists.activo) {
+        throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
+      }
+    }
+
+    if (payload.password) {
+      data.passwordHash = await bcrypt.hash(payload.password, env.BCRYPT_SALT_ROUNDS)
+      delete data.password
+    }
+
+    const updated = await userRepository.update(id, data)
+
+    return removeSensitiveFields(updated)
+};
+
+export const softDelete = async (userId) => {
+  const user = await userRepository.findById(userId);
+
+  if (!user) {
+    throw createError('User not found', 404, 'USER_NOT_FOUND');
+  }
+
+  if (user.activo === false) {
+    throw createError('User already deleted', 400, 'USER_ALREADY_DELETED');
+  }
+
+  const updated = await userRepository.softDelete(userId);
+
+  return removeSensitiveFields(updated);
 };

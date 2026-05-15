@@ -5,7 +5,7 @@ export const errorMiddleware = (err, req, res, next) => {
 
   return errorResponse(
     res,
-    'Error interno del servidor',
+    'Internal Server Error',
     'INTERNAL_SERVER_ERROR',
     [],
     500
