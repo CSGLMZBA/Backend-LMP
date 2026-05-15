@@ -1,8 +1,10 @@
 import { db } from '../../config/firebase.js';
 
+const usersCollectionName = 'usuarios' // Easier to update later and to avoid typos
+
 export const findUserByEmail = async (email) => {
   const snapshot = await db
-    .collection('usuarios')
+    .collection(usersCollectionName)
     .where('email', '==', email)
     .limit(1)
     .get();
@@ -18,7 +20,7 @@ export const findUserByEmail = async (email) => {
 };
 
 export const createUser = async (userData) => {
-  const docRef = await db.collection('usuarios').add(userData);
+  const docRef = await db.collection(usersCollectionName).add(userData);
 
   return {
     id: docRef.id,
