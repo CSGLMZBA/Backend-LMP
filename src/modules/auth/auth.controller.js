@@ -90,15 +90,15 @@ export const softDelete = async (req, res) => {
 
 export const update = async (req, res) => {
   try {
-    const usuario = await authService.update(
-      req.validatedData
-    );
+    const { userId } = req.params;  
+    const data = req.validatedData; 
+
+    const usuario = await authService.update(userId, data);
 
     return successResponse(
       res,
       'User updated',
-      usuario,
-      201
+      usuario
     );
   } catch (error) {
     if (error.message === 'EMAIL_ALREADY_EXISTS') {
@@ -112,11 +112,11 @@ export const update = async (req, res) => {
     }
 
     return errorResponse(
-    res,
-    'Update error',
-    'INTERNAL_ERROR',
-    [error.message],
-    500
-  );
+      res,
+      'Update error',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
   }
 };
