@@ -3,7 +3,7 @@ import { env } from '../config/env.js';
 
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, env.JWT_SECRET, {
-    expiresIn: env.JWT_EXPIRES_IN,
+    expiresIn: env.JWT_EXPIRES_IN, // Fixed so it actually uses the specified time in the env file
   });
 };
 
