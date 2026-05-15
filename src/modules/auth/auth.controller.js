@@ -8,7 +8,7 @@ import {
 export const register = async (req, res) => {
   try {
     const usuario = await authService.register(
-      req.datosValidados
+      req.validatedData
     );
 
     return successResponse(
@@ -35,7 +35,7 @@ export const register = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const result = await authService.login(
-      req.datosValidados
+      req.validatedData
     );
 
     return successResponse(
