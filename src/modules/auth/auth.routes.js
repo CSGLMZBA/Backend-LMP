@@ -9,7 +9,10 @@ import {
   registerSchema,
 } from './auth.schema.js';
 
+
+
 const router = Router();
+// We leave these routes unprotected since this product is supposed to work as an open platform
 
 router.post(
   '/register',

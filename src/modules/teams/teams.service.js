@@ -31,7 +31,6 @@ export const createTeam = async (data, userId) => {
 export const getTeamsByUser = async (userId) => {
   const teams = await teamsRepository.getTeamsByUserId(userId);
   
-  // Return without exposing passwords
   return teams.map(team => ({
     id: team.id,
     name: team.name,
@@ -52,7 +51,6 @@ export const getTeamById = async (teamId, userId) => {
     throw new Error('UNAUTHORIZED');
   }
   
-  // Return without exposing password
   return {
     id: team.id,
     name: team.name,
