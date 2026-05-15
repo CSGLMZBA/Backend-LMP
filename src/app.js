@@ -7,7 +7,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-app.use(errorMiddleware);
 app.use('/api', routes);
+
+app.use(errorMiddleware);
 
 export default app;
