@@ -36,7 +36,7 @@ curl -X DELETE http://localhost:3000/api/auth/USER_ID \
 
 
 # CREATE TEAM
-curl -X POST http://localhost:3000/api/teams/create \
+curl -X POST http://localhost:3000/api/teams \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer BEARER_TOKEN" \
   -d '{
@@ -46,10 +46,10 @@ curl -X POST http://localhost:3000/api/teams/create \
 
 
 # GET MY TEAMS
-curl -X GET http://localhost:3000/api/teams/myTeams \
+curl -X GET http://localhost:3000/api/teams \
   -H "Authorization: Bearer BEARER_TOKEN"
 
 
 # GET SPECIFIC TEAM
-curl -X GET http://localhost:3000/api/teams/myTeams/TEAM_ID \
+curl -X GET http://localhost:3000/api/teams/TEAM_ID \
   -H "Authorization: Bearer BEARER_TOKEN"

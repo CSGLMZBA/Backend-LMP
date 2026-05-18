@@ -10,13 +10,13 @@ const router = Router();
 router.use(authMiddleware);
 
 // POST /api/teams/create Create a new team
-router.post('/create', validate(createTeamSchema), teamsController.createTeam);
+router.post('/', validate(createTeamSchema), teamsController.createTeam);
 
 // GET /api/teams/myTeams Get all teams that the current user is in
-router.get('/myTeams', teamsController.getMyTeams);
+router.get('/', teamsController.getMyTeams);
 
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
-router.get('/myTeams/:teamId', teamsController.getTeam);
+router.get('/:teamId', teamsController.getTeam);
 
 
 // TO DO:
