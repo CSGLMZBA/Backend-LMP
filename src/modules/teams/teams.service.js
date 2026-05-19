@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import * as teamsRepository from './teams.repository.js';
 import { env } from '../../config/env.js';
 
