@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import * as teamsController from './teams.controller.js';
+import * as chartsController from './charts.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-import * as teamsSchema from './teams.schema.js';
+import * as chartsSchema from './charts.schema.js';
 
 const router = Router();
 
@@ -10,13 +10,22 @@ const router = Router();
 router.use(authMiddleware);
 
 // POST /api/teams/create Create a new team
-router.post('/', validate(teamsSchema.create), teamsController.createTeam);
+router.post('/', 
+    validate(chartsSchema.create), 
+    chartsController.createChart);
 
 // GET /api/teams/myTeams Get all teams that the current user is in
-router.get('/', teamsController.getMyTeams);
+router.get('/', 
+    chartsController.getMyCharts);
 
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
-router.get('/:teamId', teamsController.getTeam);
+router.get('/:chartId', 
+    chartsController.getChart);
+
+router.patch('/:chartId', 
+    validate(chartsSchema.updateParams, 'params'),
+    validate(chartsSchema.update), 
+    chartsController.updateChart);
 
 
 // TO DO:
