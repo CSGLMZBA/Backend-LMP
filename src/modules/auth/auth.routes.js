@@ -17,11 +17,17 @@ router.post(
   authController.register
 );
 
+router.get(
+  '/:userId',
+  authController.getUser
+)
+
 router.post(
   '/login',
   validate(userSchema.login),
   authController.login
 );
+
 
 router.use(authMiddleware);
 

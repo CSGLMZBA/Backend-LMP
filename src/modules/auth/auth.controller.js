@@ -38,6 +38,39 @@ export const register = async (req, res) => {
   }
 };
 
+export const getUser = async (req, res) => {
+try {
+    const { userId } = req.params;
+    
+    const user = await authService.getUserById(userId);
+    return successResponse(
+      res,
+      'User retrieved',
+      user
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED') {
+      return errorResponse(
+        res,
+        'You do not have permission to view this user',
+        'UNAUTHORIZED',
+        [],
+        403
+      );
+    }
+    return errorResponse(res, 'Error retrieving user');
+  }
+};
+
 export const login = async (req, res) => {
   try {
     const result = await authService.login(

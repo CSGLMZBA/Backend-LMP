@@ -46,6 +46,17 @@ export const register = async (data) => {
   return removeSensitiveFields(user);
 };
 
+
+
+export const getUserById = async (userId) => {
+  const user = await userRepository.findById(userId);
+  if (!user) {
+    throw new Error('USER_NOT_FOUND');
+  }
+  
+  return removeSensitiveFields(user);
+};
+
 export const login = async (data) => {
   const user = await userRepository.findByEmail(data.email);
 
