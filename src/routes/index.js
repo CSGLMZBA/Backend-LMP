@@ -2,7 +2,8 @@ import { Router } from 'express';
 
 import authRoutes from '../modules/auth/auth.routes.js';
 import teamsRoutes from '../modules/teams/teams.routes.js';
-import tasksRoutes from '../modules/Task/task.routes.js'; 
+import tasksRoutes from '../modules/Task/task.routes.js';
+import stagesRoutes from '../modules/stages/stages.routes.js';
 
 const router = Router();
 
@@ -21,5 +22,8 @@ router.use('/teams', teamsRoutes);
 
 // Add routes for tasks
 router.use('/tasks', tasksRoutes);
+
+//Add routes for stages
+router.use('/stages', stagesRoutes);
 
 export default router;
