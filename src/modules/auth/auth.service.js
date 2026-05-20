@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import { userRepository } from './auth.repository.js';
 
-import { generateAccessToken } from '../../utils/jwt.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
 
 import { env } from '../../config/env.js';
 
@@ -10,6 +10,7 @@ const removeSensitiveFields = (user) => {
 
   const clean = { ...user }
   delete clean.passwordHash
+  delete clean.tokenVersion
 
   return clean
 
@@ -18,19 +19,19 @@ const removeSensitiveFields = (user) => {
 export const register = async (data) => {
   let existingUser = await userRepository.findByEmail(data.email);
 
-  if (existingUser && existingUser.activo) {
+  if (existingUser && existingUser.active) {
     throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
   existingUser = await userRepository.findByUserName(data.userName);
 
-  if (existingUser && existingUser.activo) {
+  if (existingUser && existingUser.active) {
     throw new Error('USERNAME_ALREADY_IN_USE');
   }
 
   const hashedPassword = await bcrypt.hash(
     data.password,
-    Number(env.BCRYPT_SALT_ROUNDS)
+    env.BCRYPT_SALT_ROUNDS
   );
 
   const user = await userRepository.create({
@@ -39,8 +40,9 @@ export const register = async (data) => {
     email: data.email,
     passwordHash: hashedPassword,
     rol: 'cliente',
-    activo: true,
+    active: true,
     createdAt: new Date(),
+    tokenVersion: 0
   });
 
   return removeSensitiveFields(user);
@@ -48,91 +50,110 @@ export const register = async (data) => {
 
 
 
-export const getUserById = async (userId) => {
-  const user = await userRepository.findById(userId);
-  if (!user) {
-    throw new Error('USER_NOT_FOUND');
-  }
-  
-  return removeSensitiveFields(user);
-};
+
 
 export const login = async (data) => {
   const user = await userRepository.findByEmail(data.email);
 
-  if (!user || !user.activo) {
+  if (!user || !user.active) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
   const validPassword = await bcrypt.compare(
-  data.password,
-  user.passwordHash
+    data.password,
+    user.passwordHash
   );
 
   if (!validPassword) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
-  const token = generateAccessToken({
+  const payload = {
     id: user.id,
-    email: user.email,
     rol: user.rol,
-  });
+    tokenVersion: user.tokenVersion,
+  };
 
-  delete user.password;
+  const accessToken = generateAccessToken(payload);
+
+  const refreshToken = generateRefreshToken(payload);
 
   return {
-    user,
-    token,
+    user: removeSensitiveFields(user),
+    accessToken,
+    refreshToken,
   };
 };
 
-export const update = async(id, payload) => {
-    const user = await userRepository.findById(id);
+export const logout = async (userId) => {
+  const user = await userRepository.findById(userId);
 
-    if (!user) {
-      throw createError('User not found', 404, 'USER_NOT_FOUND')
-    }
-    
-    const data = { ...payload }
+  if (!user || !user.active) {
+    throw new Error('INVALID_CREDENTIALS');
+  }
 
-    if (payload.userName && payload.userName !== user.userName) {
-      const exists = await userRepository.findByUserName(payload.userName)
-
-      if (exists && exists.activo) {
-        throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
-      }
-    }
-    if (payload.email && payload.email !== user.email) {
-      const exists = await userRepository.findByEmail(payload.email)
-
-      if (exists && exists.activo) {
-        throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
-      }
-    }
-
-    if (payload.password) {
-      data.passwordHash = await bcrypt.hash(payload.password, env.BCRYPT_SALT_ROUNDS)
-      delete data.password
-    }
-
-    const updated = await userRepository.update(id, data)
-
-    return removeSensitiveFields(updated)
+  await userRepository.incrementTokenVersion(userId);
 };
 
-export const softDelete = async (userId) => {
-  const user = await userRepository.findById(userId);
+
+export const refresh = async (refreshToken) => {
+  try {
+    const decoded = verifyRefreshToken(refreshToken);
+
+    const user = await userRepository.findById(decoded.id);
+
+    if (!user || !user.active) {
+      throw new Error('INVALID_REFRESH_TOKEN');
+    }
+
+    const payload = {
+      id: user.id,
+      userName: user.userName,
+      email: user.email,
+      rol: user.rol,
+    };
+
+    const accessToken = generateAccessToken(payload);
+
+    // optional rotation
+    const newRefreshToken = generateRefreshToken(payload);
+
+    return {
+      accessToken,
+      refreshToken: newRefreshToken,
+    };
+  } catch (error) {
+    throw new Error('INVALID_REFRESH_TOKEN');
+  }
+};
+
+export const updatePassword = async (id, data) => {
+  const user = await userRepository.findById(id);
 
   if (!user) {
     throw createError('User not found', 404, 'USER_NOT_FOUND');
   }
 
-  if (user.activo === false) {
-    throw createError('User already deleted', 400, 'USER_ALREADY_DELETED');
+  const validPassword = await bcrypt.compare(
+    data.oldPassword,
+    user.passwordHash
+  );
+
+  if (!validPassword) {
+    throw new Error('INVALID_CREDENTIALS');
   }
 
-  const updated = await userRepository.softDelete(userId);
+  const newPasswordHash = await bcrypt.hash(
+    data.password,
+    env.BCRYPT_SALT_ROUNDS
+  );
+
+  const updateData = {
+    passwordHash: newPasswordHash,
+  };
+
+  // 4. update user
+  const updated = await userRepository.update(id, updateData);
 
   return removeSensitiveFields(updated);
 };

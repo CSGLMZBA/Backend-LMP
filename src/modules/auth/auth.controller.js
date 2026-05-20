@@ -13,16 +13,16 @@ export const register = async (req, res) => {
 
     return successResponse(
       res,
-      'Usuario registrado',
+      'User Registered',
       usuario,
       201
     );
   } catch (error) {
-    if (error.message === 'EMAIL_ALREADY_EXISTS') {
+    if (error.message === 'EMAIL_ALREADY_IN_USE') {
       return errorResponse(
         res,
         'Theres already a user with that email',
-        'EMAIL_ALREADY_EXISTS',
+        'EMAIL_ALREADY_IN_USE',
         [],
         400
       );
@@ -35,39 +35,6 @@ export const register = async (req, res) => {
     [error.message],
     500
   );
-  }
-};
-
-export const getUser = async (req, res) => {
-try {
-    const { userId } = req.params;
-    
-    const user = await authService.getUserById(userId);
-    return successResponse(
-      res,
-      'User retrieved',
-      user
-    );
-  } catch (error) {
-    if (error.message === 'USER_NOT_FOUND') {
-      return errorResponse(
-        res,
-        'User not found',
-        'USER_NOT_FOUND',
-        [],
-        404
-      );
-    }
-    if (error.message === 'UNAUTHORIZED') {
-      return errorResponse(
-        res,
-        'You do not have permission to view this user',
-        'UNAUTHORIZED',
-        [],
-        403
-      );
-    }
-    return errorResponse(res, 'Error retrieving user');
   }
 };
 
@@ -103,52 +70,101 @@ export const login = async (req, res) => {
   }
 };
 
-export const softDelete = async (req, res) => {
+export const refresh = async (req, res) => {
   try {
-    const { userId } = req.validatedData;
+    const { refreshToken } = req.body;
 
-    const result = await authService.softDelete(userId);
+    if (!refreshToken) {
+      return errorResponse(
+        res,
+        'Refresh token required',
+        'NO_REFRESH_TOKEN',
+        [],
+        401
+      );
+    }
 
-    return successResponse(res, 'User erased', result);
+    const result = await authService.refresh(refreshToken);
+
+    return successResponse(
+      res,
+      'Token refreshed',
+      result
+    );
   } catch (error) {
     return errorResponse(
       res,
-      'Error deleting',
-      'DELETE_ERROR',
-      [error.message],
-      500
+      'Invalid refresh token',
+      'INVALID_REFRESH_TOKEN',
+      [],
+      401
     );
   }
 };
 
-export const update = async (req, res) => {
-  try {
-    const { userId } = req.params;  
-    const data = req.validatedData; 
 
-    const usuario = await authService.update(userId, data);
+export const updatePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await authService.updatePassword(
+      userId,
+      req.validatedData
+    );
 
     return successResponse(
       res,
-      'User updated',
-      usuario
+      'Password Updated succcesfully',
+      result
     );
   } catch (error) {
-    if (error.message === 'EMAIL_ALREADY_EXISTS') {
+    if (error.message === 'INVALID_CREDENTIALS') {
       return errorResponse(
         res,
-        'Theres already a user with that email',
-        'EMAIL_ALREADY_EXISTS',
+        'Invalid Credentials',
+        'INVALID_CREDENTIALS',
         [],
-        400
+        401
       );
     }
 
     return errorResponse(
       res,
-      'Update error',
-      'INTERNAL_ERROR',
-      [error.message],
+      'Password update error',
+      'PASSWORD_UPDATE_ERROR',
+      [],
+      500
+    );
+  }
+};
+
+export const logout = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await authService.logout(
+      userId
+    );
+
+    return successResponse(
+      res,
+      'Logged out succesfully',
+      result
+    );
+  } catch (error) {
+    if (error.message === 'INVALID_CREDENTIALS') {
+      return errorResponse(
+        res,
+        'Invalid Credentials',
+        'INVALID_CREDENTIALS',
+        [],
+        401
+      );
+    }
+
+    return errorResponse(
+      res,
+      'Logout error',
+      'LOGOUT_UPDATE_ERROR',
+      [],
       500
     );
   }

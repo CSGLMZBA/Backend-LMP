@@ -17,10 +17,6 @@ router.post(
   authController.register
 );
 
-router.get(
-  '/:userId',
-  authController.getUser
-)
 
 router.post(
   '/login',
@@ -31,19 +27,25 @@ router.post(
 
 router.use(authMiddleware);
 
+router.post(
+  '/logout',
+  authController.logout
+);
+
+router.get(
+  '/me',
+  authController.getSelf
+)
+router.get(
+  '/refresh',
+  authController.refresh)
+
 router.patch(
-  '/:userId',
-  validate(userSchema.updateParams, 'params'),
-  validate(userSchema.update),
+  '/change-password',
+  validate(userSchema.updatePassword),
   authorize.self(),
   authController.update
 );
 
-router.delete(
-  '/:userId',
-  validate(userSchema.softDeleteParams, 'params'),
-  authorize.selfOrAdmin(),
-  authController.softDelete
-);
 
 export default router;

@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 
 const { FieldValue } = admin.firestore;
 
-const usersCollectionName = 'usuarios' // Easier to update later and to avoid typos
+const usersCollectionName = 'users' // Easier to update later and to avoid typos
 
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -15,7 +15,7 @@ async findByEmail(email) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('email', '==', email)
-    .where('activo', '==', true)
+    .where('active', '==', true)
     .limit(1)
     .get();
 
@@ -33,7 +33,7 @@ async findByUserName (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('userName', '==', userName)
-    .where('activo', '==', true)
+    .where('active', '==', true)
     .limit(1)
     .get();
 
@@ -80,17 +80,16 @@ async update(id, data) {
 
   return serializeDoc(updated)
 },
-async softDelete(id) {
-  const docRef = db.collection(usersCollectionName).doc(id);
+async incrementTokenVersion(userId) {
+  const docRef = db.collection(usersCollectionName).doc(userId);
 
   await docRef.update({
-    activo: false,
+    token_version: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp(),
-    deletedAt: FieldValue.serverTimestamp(),
   });
 
   const updated = await docRef.get();
 
   return serializeDoc(updated);
-}
+},
 };
