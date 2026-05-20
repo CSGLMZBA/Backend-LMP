@@ -22,7 +22,7 @@ export const authMiddleware = async (req, res, next) => {
 
     const user = await userRepository.findById(decoded.id);
 
-    if (!user || !user.activo) {
+    if (!user || !user.active) {
       return errorResponse(
         res,
         'User not found',
@@ -33,7 +33,7 @@ export const authMiddleware = async (req, res, next) => {
     }
 
     //Token version
-    if (decoded.tokenVersion !== user.token_version) {
+    if (decoded.tokenVersion !== user.tokenVersion) {
       return errorResponse(
         res,
         'Token revoked',

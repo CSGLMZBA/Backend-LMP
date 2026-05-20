@@ -24,6 +24,9 @@ router.post(
   authController.login
 );
 
+router.post(
+  '/refresh',
+  authController.refresh);
 
 router.use(authMiddleware);
 
@@ -34,16 +37,12 @@ router.post(
 
 router.get(
   '/me',
-  authController.getSelf
-)
-router.get(
-  '/refresh',
-  authController.refresh)
+  authController.getSelf);
+
 
 router.patch(
   '/change-password',
   validate(userSchema.updatePassword),
-  authorize.self(),
   authController.updatePassword
 );
 

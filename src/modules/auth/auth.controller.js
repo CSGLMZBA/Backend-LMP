@@ -169,3 +169,22 @@ export const logout = async (req, res) => {
     );
   }
 };
+
+export const getSelf = async (req, res) => {
+  try {
+    
+    return successResponse(
+      res,
+      'User info retrieved successfully',
+      req.user
+    );
+  } catch (error) {
+    return errorResponse(
+      res,
+      'Failed to get user info',
+      'GET_SELF_ERROR',
+      [error.message],
+      500
+    );
+  }
+};

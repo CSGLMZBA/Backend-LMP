@@ -5,10 +5,21 @@ const { FieldValue } = admin.firestore;
 
 const usersCollectionName = 'users' // Easier to update later and to avoid typos
 
-const serializeDoc = (doc) => ({
-  id: doc.id,
-  ...doc.data()
-})
+const serializeDoc = (doc) => {
+  const data = doc.data();
+  return {
+    id: doc.id,
+    displayName: data.displayName,
+    userName: data.userName,
+    email: data.email,
+    rol: data.rol,
+    active: data.activo ?? true,
+    tokenVersion: data.tokenVersion ?? 0,
+    passwordHash: data.passwordHash, 
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  };
+};
 
 export const userRepository = {
 async findByEmail(email) {
@@ -84,7 +95,7 @@ async incrementTokenVersion(userId) {
   const docRef = db.collection(usersCollectionName).doc(userId);
 
   await docRef.update({
-    token_version: FieldValue.increment(1),
+    tokenVersion: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp(),
   });
 

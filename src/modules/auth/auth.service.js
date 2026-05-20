@@ -49,21 +49,20 @@ export const register = async (data) => {
 };
 
 
-
-
-
 export const login = async (data) => {
-  const user = await userRepository.findByEmail(data.email);
 
+  const user = await userRepository.findByEmail(data.email);
+  
   if (!user || !user.active) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
+  // Compare the plain password with the stored hash
   const validPassword = await bcrypt.compare(
     data.password,
     user.passwordHash
   );
-
+  console.log('password valid?', validPassword);
   if (!validPassword) {
     throw new Error('INVALID_CREDENTIALS');
   }
@@ -75,7 +74,6 @@ export const login = async (data) => {
   };
 
   const accessToken = generateAccessToken(payload);
-
   const refreshToken = generateRefreshToken(payload);
 
   return {
