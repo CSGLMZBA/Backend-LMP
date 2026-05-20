@@ -44,7 +44,7 @@ router.patch(
   '/change-password',
   validate(userSchema.updatePassword),
   authorize.self(),
-  authController.update
+  authController.updatePassword
 );
 
 
