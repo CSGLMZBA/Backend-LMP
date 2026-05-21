@@ -5,16 +5,15 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 
 import { env } from '../../config/env.js';
 
-const removeSensitiveFields = (user) => {
-  if (!user) return user
+const removeSensitiveFields = (data) => {
+  if (!data) return data;
 
-  const clean = { ...user }
-  delete clean.passwordHash
-  delete clean.tokenVersion
+  const sanitize = ({ passwordHash, tokenVersion, ...user }) => user;
 
-  return clean
-
-} 
+  return Array.isArray(data)
+    ? data.map(sanitize)
+    : sanitize(data);
+};
 
 export const register = async (data) => {
   let existingUser = await userRepository.findByEmail(data.email);
@@ -62,7 +61,7 @@ export const login = async (data) => {
     data.password,
     user.passwordHash
   );
-  console.log('password valid?', validPassword);
+
   if (!validPassword) {
     throw new Error('INVALID_CREDENTIALS');
   }
