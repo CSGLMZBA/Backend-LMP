@@ -5,6 +5,7 @@ import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authorize } from '../../middleware/authorize.middleware.js';
 import { usersSchema } from './users.schema.js';
+import { userSchema } from '../auth/auth.schema.js';
 
 
 
@@ -41,13 +42,12 @@ router.patch(
     usersController.patchStatus
   );
 
-  /*
-
+  
 router.delete(
   '/:userId',
-  validate(userSchema.softDeleteParams, 'params'),
-  authorize.selfOrAdmin(),
-  authController.softDelete
-);
+  validate(usersSchema.softDeleteParams, 'params'),
+  usersController.softDelete
+  );
+/*
 */
 export default router;

@@ -91,35 +91,6 @@ export const getUsers = async () => {
   return removeSensitiveFields(users);
 };
 
-export const login = async (data) => {
-  const user = await usersRepository.findByEmail(data.email);
-
-  if (!user || !user.active) {
-    throw new Error('INVALID_CREDENTIALS');
-  }
-
-  const validPassword = await bcrypt.compare(
-  data.password,
-  user.passwordHash
-  );
-
-  if (!validPassword) {
-    throw new Error('INVALID_CREDENTIALS');
-  }
-
-  const token = generateAccessToken({
-    id: user.id,
-    email: user.email,
-    rol: user.rol,
-  });
-
-  user = removeSensitiveFields(user);
-
-  return {
-    removeSensitiveFields,
-    token,
-  };
-};
 
 export const update = async(id, payload) => {
     const user = await usersRepository.findById(id);

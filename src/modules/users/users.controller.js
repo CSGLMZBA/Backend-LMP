@@ -148,7 +148,7 @@ try {
 
 export const softDelete = async (req, res) => {
   try {
-    const { userId } = req.validatedData;
+    const { userId } = req.params;
 
     const result = await usersService.softDelete(userId);
 
