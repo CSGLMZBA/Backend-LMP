@@ -20,7 +20,12 @@ export const usersSchema = {
   putParams: z.object({
     userId: z.string().min(1),
   }),
-
+  patchStatusParams: z.object({
+    userId: z.string().min(1)
+  }),
+  patchStatus: z.object({
+    status: z.string().min(1)
+  }),
   put: z.object({
     displayName: z.string().min(2),
     userName: z.string().min(3),

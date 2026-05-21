@@ -92,6 +92,30 @@ export const getUser = async (req, res) => {
 try {
     const { userId } = req.params;
     
+    const user = await usersService.update(userId, req.validatedData)
+    return successResponse(
+      res,
+      'User status patched',
+      user
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    return errorResponse(res, 'Error patching user status');
+  }
+};
+
+export const patchStatus = async (req, res) => {
+try {
+    const { userId } = req.params;
+    
     const user = await usersService.getUserById(userId);
     return successResponse(
       res,

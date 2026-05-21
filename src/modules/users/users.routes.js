@@ -20,6 +20,7 @@ router.get(
 );
 router.get(
   '/:userId',
+  validate(usersSchema.getParams,'params'),
   usersController.getUser
 );
 router.post(
@@ -28,18 +29,19 @@ router.post(
   usersController.postUser
   );
 
-  router.put('/:userId',
-    validate(usersSchema.putParams,'params'),
-    validate(usersSchema.put),
-    usersController.putUser);
-    /*
+router.put('/:userId',
+  validate(usersSchema.putParams,'params'),
+  validate(usersSchema.put),
+  usersController.putUser);
+  
 router.patch(
-  '/:userId/status',
-  validate(userSchema.updateStatusParams, 'params'),
-  validate(userSchema.updateStatus),
-  authorize.self(),
-  authController.updateStatus
-);
+    '/:userId/status',
+    validate(usersSchema.patchStatusParams, 'params'),
+    validate(usersSchema.patchStatus),
+    usersController.patchStatus
+  );
+
+  /*
 
 router.delete(
   '/:userId',
