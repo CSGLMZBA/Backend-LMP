@@ -4,22 +4,21 @@ import admin from 'firebase-admin';
 const { FieldValue } = admin.firestore;
 
 const usersCollectionName = 'users' // Easier to update later and to avoid typos
-
-const serializeDoc = (doc) => {
-  const data = doc.data();
-  return {
-    id: doc.id,
-    displayName: data.displayName,
-    userName: data.userName,
-    email: data.email,
-    rol: data.rol,
-    active: data.active ?? true,
-    tokenVersion: data.tokenVersion ?? 0,
-    passwordHash: data.passwordHash, 
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
-  };
+const DEFAULT_USER_FIELDS = {
+  displayName: "",
+  userName: "",
+  email: "",
+  rol: "cliente",
+  status: "online",
+  active: true,
+  tokenVersion: 0,
+  passwordHash: null,
 };
+
+const serializeDoc = (doc) => ({
+  id: doc.id,
+  ...doc.data()
+})
 
 export const userRepository = {
 async findByEmail(email) {
@@ -70,6 +69,7 @@ async findById(id) {
 
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
+    ...DEFAULT_USER_FIELDS,
     ...data,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
