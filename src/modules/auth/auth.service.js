@@ -106,9 +106,8 @@ export const refresh = async (refreshToken) => {
 
     const payload = {
       id: user.id,
-      userName: user.userName,
-      email: user.email,
       rol: user.rol,
+      tokenVersion: user.tokenVersion,
     };
 
     const accessToken = generateAccessToken(payload);
