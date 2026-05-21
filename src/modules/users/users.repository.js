@@ -15,7 +15,7 @@ async findByEmail(email) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('email', '==', email)
-    .where('activo', '==', true)
+    .where('active', '==', true)
     .limit(1)
     .get();
 
@@ -33,7 +33,7 @@ async findByUserName (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('userName', '==', userName)
-    .where('activo', '==', true)
+    .where('active', '==', true)
     .limit(1)
     .get();
 
@@ -92,7 +92,7 @@ async softDelete(id) {
   const docRef = db.collection(usersCollectionName).doc(id);
 
   await docRef.update({
-    activo: false,
+    active: false,
     updatedAt: FieldValue.serverTimestamp(),
     deletedAt: FieldValue.serverTimestamp(),
   });

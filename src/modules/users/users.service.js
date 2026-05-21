@@ -19,13 +19,13 @@ const removeSensitiveFields = (data) => {
 export const postUser = async (data) => {
   let existingUser = await usersRepository.findByEmail(data.email);
 
-  if (existingUser && existingUser.activo) {
+  if (existingUser && existingUser.active) {
     throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
   existingUser = await usersRepository.findByUserName(data.userName);
 
-  if (existingUser && existingUser.activo) {
+  if (existingUser && existingUser.active) {
     throw new Error('USERNAME_ALREADY_IN_USE');
   }
 
@@ -40,7 +40,7 @@ export const postUser = async (data) => {
     email: data.email,
     passwordHash: hashedPassword,
     rol: 'cliente',
-    activo: true,
+    active: true,
     createdAt: new Date(),
   });
 
@@ -64,7 +64,7 @@ export const putUser = async (userId, data) => {
     email: data.email,
     passwordHash: hashedPassword,
     rol: 'cliente',
-    activo: true,
+    active: true,
     createdAt: new Date(),
   });
 
@@ -94,7 +94,7 @@ export const getUsers = async () => {
 export const login = async (data) => {
   const user = await usersRepository.findByEmail(data.email);
 
-  if (!user || !user.activo) {
+  if (!user || !user.active) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
@@ -133,14 +133,14 @@ export const update = async(id, payload) => {
     if (payload.userName && payload.userName !== user.userName) {
       const exists = await usersRepository.findByUserName(payload.userName)
 
-      if (exists && exists.activo) {
+      if (exists && exists.active) {
         throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
       }
     }
     if (payload.email && payload.email !== user.email) {
       const exists = await usersRepository.findByEmail(payload.email)
 
-      if (exists && exists.activo) {
+      if (exists && exists.active) {
         throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
       }
     }
@@ -162,7 +162,7 @@ export const softDelete = async (userId) => {
     throw createError('User not found', 404, 'USER_NOT_FOUND');
   }
 
-  if (user.activo === false) {
+  if (user.active === false) {
     throw createError('User already deleted', 400, 'USER_ALREADY_DELETED');
   }
 
