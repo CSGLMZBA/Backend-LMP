@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt'
-import { userRepository } from './auth.repository.js';
+
+import { usersRepository } from './users.repository.js';
 
 import { generateAccessToken } from '../../utils/jwt.js';
 
@@ -15,14 +16,14 @@ const removeSensitiveFields = (data) => {
     : sanitize(data);
 };
 
-export const register = async (data) => {
-  let existingUser = await userRepository.findByEmail(data.email);
+export const postUser = async (data) => {
+  let existingUser = await usersRepository.findByEmail(data.email);
 
   if (existingUser && existingUser.activo) {
     throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
-  existingUser = await userRepository.findByUserName(data.userName);
+  existingUser = await usersRepository.findByUserName(data.userName);
 
   if (existingUser && existingUser.activo) {
     throw new Error('USERNAME_ALREADY_IN_USE');
@@ -30,10 +31,10 @@ export const register = async (data) => {
 
   const hashedPassword = await bcrypt.hash(
     data.password,
-    Number(env.BCRYPT_SALT_ROUNDS)
+    env.BCRYPT_SALT_ROUNDS
   );
 
-  const user = await userRepository.create({
+  const user = await usersRepository.create({
     displayName: data.displayName,
     userName: data.userName,
     email: data.email,
@@ -46,10 +47,34 @@ export const register = async (data) => {
   return removeSensitiveFields(user);
 };
 
+export const putUser = async (userId, data) => {
+  const user = await usersRepository.findById(userId);
+  if (!user) {
+    throw new Error('USER_NOT_FOUND');
+  }
+
+  const hashedPassword = await bcrypt.hash(
+    data.password,
+    env.BCRYPT_SALT_ROUNDS
+  );
+
+  const userNew = await usersRepository.update(userId,{
+    displayName: data.displayName,
+    userName: data.userName,
+    email: data.email,
+    passwordHash: hashedPassword,
+    rol: 'cliente',
+    activo: true,
+    createdAt: new Date(),
+  });
+
+  return removeSensitiveFields(userNew);
+};
+
 
 
 export const getUserById = async (userId) => {
-  const user = await userRepository.findById(userId);
+  const user = await usersRepository.findById(userId);
   if (!user) {
     throw new Error('USER_NOT_FOUND');
   }
@@ -58,7 +83,7 @@ export const getUserById = async (userId) => {
 };
 
 export const getUsers = async () => {
-  const users = await userRepository.getUsers();
+  const users = await usersRepository.getUsers();
   if (users.length === 0) {
     throw new Error('USER_DATABASE_EMPTY');
   }
@@ -67,7 +92,7 @@ export const getUsers = async () => {
 };
 
 export const login = async (data) => {
-  const user = await userRepository.findByEmail(data.email);
+  const user = await usersRepository.findByEmail(data.email);
 
   if (!user || !user.activo) {
     throw new Error('INVALID_CREDENTIALS');
@@ -88,16 +113,16 @@ export const login = async (data) => {
     rol: user.rol,
   });
 
-  delete user.password;
+  user = removeSensitiveFields(user);
 
   return {
-    user,
+    removeSensitiveFields,
     token,
   };
 };
 
 export const update = async(id, payload) => {
-    const user = await userRepository.findById(id);
+    const user = await usersRepository.findById(id);
 
     if (!user) {
       throw createError('User not found', 404, 'USER_NOT_FOUND')
@@ -106,14 +131,14 @@ export const update = async(id, payload) => {
     const data = { ...payload }
 
     if (payload.userName && payload.userName !== user.userName) {
-      const exists = await userRepository.findByUserName(payload.userName)
+      const exists = await usersRepository.findByUserName(payload.userName)
 
       if (exists && exists.activo) {
         throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
       }
     }
     if (payload.email && payload.email !== user.email) {
-      const exists = await userRepository.findByEmail(payload.email)
+      const exists = await usersRepository.findByEmail(payload.email)
 
       if (exists && exists.activo) {
         throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
@@ -125,13 +150,13 @@ export const update = async(id, payload) => {
       delete data.password
     }
 
-    const updated = await userRepository.update(id, data)
+    const updated = await usersRepository.update(id, data)
 
     return removeSensitiveFields(updated)
 };
 
 export const softDelete = async (userId) => {
-  const user = await userRepository.findById(userId);
+  const user = await usersRepository.findById(userId);
 
   if (!user) {
     throw createError('User not found', 404, 'USER_NOT_FOUND');
@@ -141,7 +166,7 @@ export const softDelete = async (userId) => {
     throw createError('User already deleted', 400, 'USER_ALREADY_DELETED');
   }
 
-  const updated = await userRepository.softDelete(userId);
+  const updated = await usersRepository.softDelete(userId);
 
   return removeSensitiveFields(updated);
 };

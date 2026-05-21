@@ -10,7 +10,7 @@ const serializeDoc = (doc) => ({
   ...doc.data()
 })
 
-export const userRepository = {
+export const usersRepository = {
 async findByEmail(email) {
   const snapshot = await db
     .collection(usersCollectionName)

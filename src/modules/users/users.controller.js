@@ -1,19 +1,19 @@
-import * as authService from './auth.service.js';
+import * as usersService from './users.service.js';
 
 import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
 
-export const register = async (req, res) => {
+export const postUser = async (req, res) => {
   try {
-    const usuario = await authService.register(
+    const usuario = await usersService.postUser(
       req.validatedData
     );
 
     return successResponse(
       res,
-      'Usuario registrado',
+      'User posted',
       usuario,
       201
     );
@@ -30,7 +30,7 @@ export const register = async (req, res) => {
 
     return errorResponse(
     res,
-    'Register error',
+    'Post error',
     'INTERNAL_ERROR',
     [error.message],
     500
@@ -38,11 +38,37 @@ export const register = async (req, res) => {
   }
 };
 
+export const putUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const usuario = await usersService.putUser(
+      userId, req.validatedData
+    );
+
+    return successResponse(
+      res,
+      'User put',
+      usuario,
+      201
+    );
+  } catch (error) {
+
+    return errorResponse(
+    res,
+    'Put error',
+    'INTERNAL_ERROR',
+    [error.message],
+    500
+  );
+  }
+};
+
+
 export const getUsers = async (req, res) =>
 {
   try
   {
-    const users = await authService.getUsers();
+    const users = await usersService.getUsers();
     return successResponse(
       res,
       'Users retrieved',
@@ -66,7 +92,7 @@ export const getUser = async (req, res) => {
 try {
     const { userId } = req.params;
     
-    const user = await authService.getUserById(userId);
+    const user = await usersService.getUserById(userId);
     return successResponse(
       res,
       'User retrieved',
@@ -100,7 +126,7 @@ export const softDelete = async (req, res) => {
   try {
     const { userId } = req.validatedData;
 
-    const result = await authService.softDelete(userId);
+    const result = await usersService.softDelete(userId);
 
     return successResponse(res, 'User erased', result);
   } catch (error) {
@@ -119,7 +145,7 @@ export const update = async (req, res) => {
     const { userId } = req.params;  
     const data = req.validatedData; 
 
-    const usuario = await authService.update(userId, data);
+    const usuario = await usersService.update(userId, data);
 
     return successResponse(
       res,

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-export const userSchema = {
-  register: z.object({
+export const usersSchema = {
+  post: z.object({
     displayName: z.string().min(3),
     userName: z.string().min(3),
     email: z.string().email(),
@@ -13,17 +13,19 @@ export const userSchema = {
     email: z.string().email(),
     password: z.string().min(6),
   }),
-
-  updateParams: z.object({
+  getParams: z.object({
+    userId: z.string().min(1),
+  }),
+  putParams: z.object({
     userId: z.string().min(1),
   }),
 
-  update: z.object({
-    displayName: z.string().min(2).optional(),
-    userName: z.string().min(3).optional(),
-    email: z.string().email().optional(),
-    password: z.string().min(6).optional(),
-    activo: z.boolean().optional(),
+  put: z.object({
+    displayName: z.string().min(2),
+    userName: z.string().min(3),
+    email: z.string().email(),
+    password: z.string().min(6),
+    activo: z.boolean(),
   }),
 
   softDeleteParams: z.object({

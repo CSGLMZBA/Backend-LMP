@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import * as authController from './auth.controller.js';
+import * as usersController from './users.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { authorize } from '../../middleware/authorize.middleware.js';
-import { userSchema } from './auth.schema.js';
+import { usersSchema } from './users.schema.js';
 
 
 
@@ -16,20 +16,23 @@ const router = Router();
 //router.use(authMiddleware);
 router.get(
   '/',
-  authController.getUsers
+  usersController.getUsers
 );
 router.get(
   '/:userId',
-  authController.getUser
+  usersController.getUser
 );
-/*
 router.post(
   '/',
-  authController.postUser
-);
-router.put('/:userId',
-  authController.putUser);
+  validate(usersSchema.post),
+  usersController.postUser
+  );
 
+  router.put('/:userId',
+    validate(usersSchema.putParams,'params'),
+    validate(usersSchema.put),
+    usersController.putUser);
+    /*
 router.patch(
   '/:userId/status',
   validate(userSchema.updateStatusParams, 'params'),
