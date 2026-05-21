@@ -5,15 +5,15 @@ import { generateAccessToken } from '../../utils/jwt.js';
 
 import { env } from '../../config/env.js';
 
-const removeSensitiveFields = (user) => {
-  if (!user) return user
+const removeSensitiveFields = (data) => {
+  if (!data) return data;
 
-  const clean = { ...user }
-  delete clean.passwordHash
+  const sanitize = ({ passwordHash, ...user }) => user;
 
-  return clean
-
-} 
+  return Array.isArray(data)
+    ? data.map(sanitize)
+    : sanitize(data);
+};
 
 export const register = async (data) => {
   let existingUser = await userRepository.findByEmail(data.email);
@@ -55,6 +55,15 @@ export const getUserById = async (userId) => {
   }
   
   return removeSensitiveFields(user);
+};
+
+export const getUsers = async () => {
+  const users = await userRepository.getUsers();
+  if (users.length === 0) {
+    throw new Error('USER_DATABASE_EMPTY');
+  }
+  
+  return removeSensitiveFields(users);
 };
 
 export const login = async (data) => {

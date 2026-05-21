@@ -38,6 +38,30 @@ export const register = async (req, res) => {
   }
 };
 
+export const getUsers = async (req, res) =>
+{
+  try
+  {
+    const users = await authService.getUsers();
+    return successResponse(
+      res,
+      'Users retrieved',
+      users
+    );
+  }
+  catch (error) 
+  {
+    return errorResponse(
+      res,
+      'Error gettin users',
+      'USERS_ERROR',
+      [error.message],
+      500
+    );
+  }
+
+}
+
 export const getUser = async (req, res) => {
 try {
     const { userId } = req.params;
@@ -71,37 +95,6 @@ try {
   }
 };
 
-export const login = async (req, res) => {
-  try {
-    const result = await authService.login(
-      req.validatedData
-    );
-
-    return successResponse(
-      res,
-      'Login successfull',
-      result
-    );
-  } catch (error) {
-    if (error.message === 'INVALID_CREDENTIALS') {
-      return errorResponse(
-        res,
-        'Invalid Credentials',
-        'INVALID_CREDENTIALS',
-        [],
-        401
-      );
-    }
-
-    return errorResponse(
-      res,
-      'Login error',
-      'LOGIN_ERROR',
-      [],
-      500
-    );
-  }
-};
 
 export const softDelete = async (req, res) => {
   try {

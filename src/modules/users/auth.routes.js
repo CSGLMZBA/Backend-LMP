@@ -22,6 +22,7 @@ router.get(
   '/:userId',
   authController.getUser
 );
+/*
 router.post(
   '/',
   authController.postUser
@@ -43,5 +44,5 @@ router.delete(
   authorize.selfOrAdmin(),
   authController.softDelete
 );
-
+*/
 export default router;

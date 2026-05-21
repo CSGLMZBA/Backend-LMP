@@ -3,7 +3,7 @@ import admin from 'firebase-admin';
 
 const { FieldValue } = admin.firestore;
 
-const usersCollectionName = 'usuarios' // Easier to update later and to avoid typos
+const usersCollectionName = 'users' // Easier to update later and to avoid typos
 
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -56,7 +56,15 @@ async findById(id) {
 
   return serializeDoc(doc);
 },
+async getUsers() {
+  const snapshot = await db.collection(usersCollectionName).get();
 
+  if (snapshot.empty) {
+    return [];
+  }
+
+  return snapshot.docs.map(serializeDoc);
+},
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
     ...data,
