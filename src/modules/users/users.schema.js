@@ -5,8 +5,9 @@ export const usersSchema = {
     displayName: z.string().min(3),
     userName: z.string().min(3),
     email: z.string().email(),
+    status: z.string().optional(),
     password: z.string().min(6),
-    activo: z.boolean().optional(),
+    active: z.boolean().optional(),
   }),
 
   login: z.object({
@@ -24,8 +25,9 @@ export const usersSchema = {
     displayName: z.string().min(2),
     userName: z.string().min(3),
     email: z.string().email(),
+    status: z.string(),
     password: z.string().min(6),
-    activo: z.boolean(),
+    active: z.boolean(),
   }),
 
   softDeleteParams: z.object({

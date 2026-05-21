@@ -4,7 +4,16 @@ import admin from 'firebase-admin';
 const { FieldValue } = admin.firestore;
 
 const usersCollectionName = 'users' // Easier to update later and to avoid typos
-
+const DEFAULT_USER_FIELDS = {
+  displayName: "",
+  userName: "",
+  email: "",
+  rol: "cliente",
+  status: "online",
+  active: true,
+  tokenVersion: 0,
+  passwordHash: null,
+};
 const serializeDoc = (doc) => ({
   id: doc.id,
   ...doc.data()
@@ -67,6 +76,7 @@ async getUsers() {
 },
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
+    ...DEFAULT_USER_FIELDS,
     ...data,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
