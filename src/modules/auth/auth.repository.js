@@ -13,7 +13,7 @@ const serializeDoc = (doc) => {
     userName: data.userName,
     email: data.email,
     rol: data.rol,
-    active: data.activo ?? true,
+    active: data.active ?? true,
     tokenVersion: data.tokenVersion ?? 0,
     passwordHash: data.passwordHash, 
     createdAt: data.createdAt,
