@@ -9,7 +9,7 @@ import { env } from '../../config/env.js';
 const removeSensitiveFields = (data) => {
   if (!data) return data;
 
-  const sanitize = ({ passwordHash, ...user }) => user;
+  const sanitize = ({ passwordHash, tokenVersion, ...user }) => user;
 
   return Array.isArray(data)
     ? data.map(sanitize)
