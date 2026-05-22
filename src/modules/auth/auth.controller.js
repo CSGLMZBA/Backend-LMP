@@ -7,14 +7,14 @@ import {
 
 export const register = async (req, res) => {
   try {
-    const usuario = await authService.register(
+    const user = await authService.register(
       req.validatedData
     );
 
     return successResponse(
       res,
       'User Registered',
-      usuario,
+      user,
       201
     );
   } catch (error) {
