@@ -7,14 +7,14 @@ import {
 
 export const postUser = async (req, res) => {
   try {
-    const usuario = await usersService.postUser(
+    const user = await usersService.postUser(
       req.validatedData
     );
 
     return successResponse(
       res,
       'User posted',
-      usuario,
+      user,
       201
     );
   } catch (error) {
@@ -41,14 +41,14 @@ export const postUser = async (req, res) => {
 export const putUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const usuario = await usersService.putUser(
+    const user = await usersService.putUser(
       userId, req.validatedData
     );
 
     return successResponse(
       res,
       'User put',
-      usuario,
+      user,
       201
     );
   } catch (error) {

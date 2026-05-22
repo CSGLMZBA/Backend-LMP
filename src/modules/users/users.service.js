@@ -2,7 +2,6 @@ import bcrypt from 'bcrypt'
 
 import { usersRepository } from './users.repository.js';
 
-import { generateAccessToken } from '../../utils/jwt.js';
 
 import { env } from '../../config/env.js';
 
@@ -17,15 +16,15 @@ const removeSensitiveFields = (data) => {
 };
 
 export const postUser = async (data) => {
-  let existingUser = await usersRepository.findByEmail(data.email);
+  let existingUser = await usersRepository.findByEmailActive(data.email);
 
-  if (existingUser && existingUser.active) {
+  if (existingUser) {
     throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
-  existingUser = await usersRepository.findByUserName(data.userName);
+  existingUser = await usersRepository.findByUserNameActive(data.userName);
 
-  if (existingUser && existingUser.active) {
+  if (existingUser) {
     throw new Error('USERNAME_ALREADY_IN_USE');
   }
 
@@ -39,7 +38,7 @@ export const postUser = async (data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    rol: 'cliente',
+    role: 'client',
     active: true,
     createdAt: new Date(),
   });
@@ -63,7 +62,7 @@ export const putUser = async (userId, data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    rol: 'cliente',
+    role: 'client',
     active: true,
     createdAt: new Date(),
   });
@@ -102,16 +101,16 @@ export const update = async(id, payload) => {
     const data = { ...payload }
 
     if (payload.userName && payload.userName !== user.userName) {
-      const exists = await usersRepository.findByUserName(payload.userName)
+      const exists = await usersRepository.findByUserNameActive(payload.userName)
 
-      if (exists && exists.active) {
+      if (exists) {
         throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
       }
     }
     if (payload.email && payload.email !== user.email) {
-      const exists = await usersRepository.findByEmail(payload.email)
+      const exists = await usersRepository.findByEmailActive(payload.email)
 
-      if (exists && exists.active) {
+      if (exists) {
         throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
       }
     }
