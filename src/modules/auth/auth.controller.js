@@ -143,7 +143,6 @@ export const logout = async (req, res) => {
     const result = await authService.logout(
       userId
     );
-
     return successResponse(
       res,
       'Logged out succesfully',
@@ -163,7 +162,7 @@ export const logout = async (req, res) => {
     return errorResponse(
       res,
       'Logout error',
-      'LOGOUT_UPDATE_ERROR',
+      'LOGOUT_ERROR',
       [],
       500
     );
