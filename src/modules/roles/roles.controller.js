@@ -28,3 +28,81 @@ export const getRoles = async (req, res) =>
   }
 
 }
+export const postRole = async (req, res) => {
+  try{
+    const role = await rolesService.postRole(
+      req.validatedData
+    );
+
+    return successResponse(
+      res,
+      'Role posted',
+      role,
+      201
+    );
+  }
+  catch (error) 
+  {
+    if (error.message === 'NAME_ALREADY_EXISTS')
+    {
+      return errorResponse(
+        res,
+        'Theres already a role with that name',
+        error.message,
+        [],
+        400
+      );
+    }
+
+    return errorResponse(
+      res,
+      'Post error',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+export const putRole = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const role = await usersService.putRole(
+      roleId, req.validatedData
+    );
+
+    return successResponse(
+      res,
+      'Role put',
+      role,
+      201
+    );
+  } catch (error) {
+
+    return errorResponse(
+    res,
+    'Put error',
+    'INTERNAL_ERROR',
+    [error.message],
+    500
+  );
+  }
+};
+
+export const softDelete = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+
+    const result = await rolesService.softDelete(roleId);
+
+    return successResponse(res, 'Role erased', result);
+  } catch (error) {
+    return errorResponse(
+      res,
+      'Error deleting',
+      'DELETE_ERROR',
+      [error.message],
+      500
+    );
+  }
+};

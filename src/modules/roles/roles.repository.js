@@ -5,14 +5,31 @@ const { FieldValue } = admin.firestore;
 
 const rolesCollectionName = 'roles' // Easier to update later and to avoid typos
 const DEFAULT_ROLES_FIELDS = {
-  roleName: "",
+  roleName: "undefined",
   roleLevel: 0,
   active: true,
-  canAddRoles: false,
-  canModifyDatabase: false,
-  canCreateTeams: false,
-  canEditCharts: false,
-  canSeeCharts: true
+  permissions: [],
+};
+
+const PERMISSIONS = {
+  ADD_ROLES: "roles.create",
+  MODIFY_DATABASE: "database.write",
+  CREATE_TEAMS: "teams.create",
+  EDIT_CHARTS: "charts.write",
+  SEE_CHARTS: "charts:read"
+};
+
+const LEVEL_PERMISSIONS_MAP = {
+  4: [PERMISSIONS.ADD_ROLES, PERMISSIONS.MODIFY_DATABASE, PERMISSIONS.CREATE_TEAMS, PERMISSIONS.EDIT_CHARTS, PERMISSIONS.SEE_CHARTS],
+  3: [PERMISSIONS.MODIFY_DATABASE, PERMISSIONS.CREATE_TEAMS, PERMISSIONS.EDIT_CHARTS, PERMISSIONS.SEE_CHARTS],
+  2: [PERMISSIONS.CREATE_TEAMS, PERMISSIONS.EDIT_CHARTS, PERMISSIONS.SEE_CHARTS],
+  1: [PERMISSIONS.EDIT_CHARTS, PERMISSIONS.SEE_CHARTS],
+  0: [PERMISSIONS.SEE_CHARTS]
+};
+
+const getPermissionsForLevel = (level) => {
+  const lvl = level ?? 0;
+  return LEVEL_PERMISSIONS_MAP[lvl] || LEVEL_PERMISSIONS_MAP[4];
 };
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -20,28 +37,10 @@ const serializeDoc = (doc) => ({
 })
 
 export const rolesRepository = {
-async findByEmail(email) {
+async findByNameActive (roleName) {
   const snapshot = await db
-    .collection(usersCollectionName)
-    .where('email', '==', email)
-    .where('active', '==', true)
-    .limit(1)
-    .get();
-
-  if (snapshot.empty) {
-    return null;
-  }
-
-  return {
-    id: snapshot.docs[0].id,
-    ...snapshot.docs[0].data(),
-  };
-},
-
-async findByUserName (userName) {
-  const snapshot = await db
-    .collection(usersCollectionName)
-    .where('userName', '==', userName)
+    .collection(rolesCollectionName)
+    .where('roleName', '==', roleName)
     .where('active', '==', true)
     .limit(1)
     .get();
@@ -57,7 +56,7 @@ async findByUserName (userName) {
 },
 
 async findById(id) {
-  const doc = await db.collection(usersCollectionName).doc(id).get();
+  const doc = await db.collection(rolesCollectionName).doc(id).get();
 
   if (!doc.exists) {
     return null;
@@ -75,8 +74,11 @@ async get() {
   return snapshot.docs.map(serializeDoc);
 },
 async create(data) {
-  const docRef = await db.collection(usersCollectionName).add({
-    ...DEFAULT_USER_FIELDS,
+  const levelPermissions = getPermissionsForLevel(data.roleLevel);
+  
+  const docRef = await db.collection(rolesCollectionName).add({
+    ...DEFAULT_ROLES_FIELDS,
+    permissions: levelPermissions,
     ...data,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -87,7 +89,7 @@ async create(data) {
   return serializeDoc(created);
 },
 async update(id, data) {
-  const docRef = db.collection(usersCollectionName).doc(id)
+  const docRef = db.collection(rolesCollectionName).doc(id)
 
   await docRef.update({
     ...data,
@@ -98,17 +100,19 @@ async update(id, data) {
 
   return serializeDoc(updated)
 },
+async delete(id) {
+  const docRef = await db.collection(rolesCollectionName).doc(id).delete();
+  deleted = await docRef.get();
+  return serializeDoc(deleted);
+},
 async softDelete(id) {
-  const docRef = db.collection(usersCollectionName).doc(id);
-
+  const docRef = db.collection(rolesCollectionName).doc(id)
   await docRef.update({
     active: false,
     updatedAt: FieldValue.serverTimestamp(),
-    deletedAt: FieldValue.serverTimestamp(),
-  });
-
-  const updated = await docRef.get();
-
-  return serializeDoc(updated);
+    deletedAt: FieldValue.serverTimestamp()
+  })
+  const updated = await docRef.get()
+  return serializeDoc(updated)
 }
 };
