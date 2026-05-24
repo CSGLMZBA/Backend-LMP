@@ -10,7 +10,7 @@ const router = Router();
 
 router.get('/',rolesController.getRoles);
 router.post('/', validate(rolesSchema.post), rolesController.postRole);
-router.put('/:roleId', validate(rolesSchema.putParams), validate(rolesSchema.put), rolesController.postRole);
-
+router.put('/:roleId', validate(rolesSchema.putParams, 'params'), validate(rolesSchema.put), rolesController.putRole);
+router.delete('/:roleId', validate(rolesSchema.deleteParams, 'params'), rolesController.deleteRole);
 
 export default router;
