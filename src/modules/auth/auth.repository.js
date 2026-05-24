@@ -8,11 +8,12 @@ const DEFAULT_USER_FIELDS = {
   displayName: "",
   userName: "",
   email: "",
-  rol: "cliente",
-  status: "online",
+  role: "client",
+  status: "offline",
   active: true,
   tokenVersion: 0,
   passwordHash: null,
+  lastOnline: null
 };
 
 const serializeDoc = (doc) => ({
@@ -22,6 +23,23 @@ const serializeDoc = (doc) => ({
 
 export const userRepository = {
 async findByEmail(email) {
+  const snapshot = await db
+    .collection(usersCollectionName)
+    .where('email', '==', email)
+    //.where('active', '==', true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
+async findByEmailActive(email) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('email', '==', email)
@@ -40,6 +58,24 @@ async findByEmail(email) {
 },
 
 async findByUserName (userName) {
+  const snapshot = await db
+    .collection(usersCollectionName)
+    .where('userName', '==', userName)
+    //.where('active', '==', true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
+
+async findByUserNameActive (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('userName', '==', userName)
@@ -91,16 +127,31 @@ async update(id, data) {
 
   return serializeDoc(updated)
 },
-async incrementTokenVersion(userId) {
-  const docRef = db.collection(usersCollectionName).doc(userId);
+async login(id) {
+  const docRef = db.collection(usersCollectionName).doc(id);
 
   await docRef.update({
-    tokenVersion: FieldValue.increment(1),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+    status: "online",
+    lastOnline: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp()
+  })
 
-  const updated = await docRef.get();
+  const updated = await docRef.get()
 
-  return serializeDoc(updated);
+  return serializeDoc(updated)
 },
+async logout(id)
+{
+  const docRef = db.collection(usersCollectionName).doc(id);
+  await docRef.update({
+    tokenVersion: FieldValue.increment(1),
+    status: "offline",
+    lastOnline: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp()
+  });
+  const updated = await docRef.get();
+  return serializeDoc(updated);
+
+},
+
 };

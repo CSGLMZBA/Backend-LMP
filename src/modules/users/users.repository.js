@@ -8,11 +8,12 @@ const DEFAULT_USER_FIELDS = {
   displayName: "",
   userName: "",
   email: "",
-  rol: "cliente",
-  status: "online",
+  role: "client",
+  status: "offline",
   active: true,
   tokenVersion: 0,
   passwordHash: null,
+  lastOnline: null
 };
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -21,6 +22,23 @@ const serializeDoc = (doc) => ({
 
 export const usersRepository = {
 async findByEmail(email) {
+  const snapshot = await db
+    .collection(usersCollectionName)
+    .where('email', '==', email)
+    //.where('active', '==', true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
+async findByEmailActive(email) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('email', '==', email)
@@ -39,6 +57,23 @@ async findByEmail(email) {
 },
 
 async findByUserName (userName) {
+  const snapshot = await db
+    .collection(usersCollectionName)
+    .where('userName', '==', userName)
+    //.where('active', '==', true)
+    .limit(1)
+    .get();
+
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
+async findByUserNameActive (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
     .where('userName', '==', userName)
