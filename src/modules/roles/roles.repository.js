@@ -89,10 +89,12 @@ async create(data) {
   return serializeDoc(created);
 },
 async update(id, data) {
+  const levelPermissions = getPermissionsForLevel(data.roleLevel);
   const docRef = db.collection(rolesCollectionName).doc(id)
 
   await docRef.update({
     ...data,
+    permissions: levelPermissions,
     updatedAt: FieldValue.serverTimestamp()
   })
 

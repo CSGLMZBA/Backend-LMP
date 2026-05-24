@@ -67,7 +67,7 @@ export const postRole = async (req, res) => {
 export const putRole = async (req, res) => {
   try {
     const { roleId } = req.params;
-    const role = await usersService.putRole(
+    const role = await rolesService.putRole(
       roleId, req.validatedData
     );
 

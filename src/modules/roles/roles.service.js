@@ -39,8 +39,9 @@ export const postRole = async (data) =>
 
 export const putRole = async (roleId, data) => {
   const role = await rolesRepository.findById(roleId);
+  console.log(role);
   if (!role) {
-    throw new Error('USER_NOT_FOUND');
+    throw new Error('ROLE_NOT_FOUND');
   }
 
   const roleNew = await rolesRepository.update(roleId,{
