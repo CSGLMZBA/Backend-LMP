@@ -1,4 +1,5 @@
 import * as tasksRepository from './task.repository.js';
+import { stagesRepository } from '../stages/stages.repository.js';
 
 export const createTask = async (data, userId) => {
   if (!data.name || data.name.trim() === '') {
@@ -41,7 +42,12 @@ export const createTask = async (data, userId) => {
   };
   
   const newTask = await tasksRepository.createTask(taskData);
-  
+
+  // Si se proporcionó un stageId, registrar la tarea en ese stage
+  if (taskData.stageId) {
+    await stagesRepository.addTask(taskData.stageId, newTask.id);
+  }
+
   return {
     id: newTask.id,
     name: newTask.name,
@@ -270,6 +276,27 @@ export const assignUsersToTask = async (taskId, userIds, assignedBy) => {
     id: updatedTask.id,
     assignedUserIds: updatedTask.assignedUserIds
   };
+};
+
+export const getTasksByPriority = async (teamId, priority, userId) => {
+  const userBelongsToTeam = await tasksRepository.verifyUserInTeam(teamId, userId);
+  if (!userBelongsToTeam) {
+    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
+  }
+
+  const tasks = await tasksRepository.getTasksByPriority(teamId, priority);
+  const sortedTasks = [...tasks].sort((a, b) => b.priority - a.priority);
+
+  return sortedTasks.map(task => ({
+    id: task.id,
+    name: task.name,
+    teamId: task.teamId,
+    stageId: task.stageId,
+    assignedUserIds: task.assignedUserIds,
+    priority: task.priority,
+    status: task.status,
+    dueDate: task.dueDate
+  }));
 };
 
 export const deleteTask = async (taskId, userId) => {
