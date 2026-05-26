@@ -154,3 +154,11 @@ export const updatePassword = async (id, data) => {
 
   return removeSensitiveFields(updated);
 };
+export const getUserById = async (userId) => {
+  const user = await userRepository.findById(userId);
+  if (!user) {
+    throw new Error('USER_NOT_FOUND');
+  }
+  
+  return removeSensitiveFields(user);
+};

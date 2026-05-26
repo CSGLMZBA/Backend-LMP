@@ -171,11 +171,11 @@ export const logout = async (req, res) => {
 
 export const getSelf = async (req, res) => {
   try {
-    
+    const user = await authService.getUserById(req.user.id);
     return successResponse(
       res,
       'User info retrieved successfully',
-      req.user
+      user
     );
   } catch (error) {
     return errorResponse(
