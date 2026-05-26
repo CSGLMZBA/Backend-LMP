@@ -1,5 +1,6 @@
-import * as stagesRepository from './stages.repository.js';
+import { stagesRepository } from './stages.repository.js';
 import * as teamsRepository from '../teams/teams.repository.js';
+import * as tasksRepository from '../Task/task.repository.js';
 
 // Helper para remover campos sensibles (si los hubiera)
 const removeSensitiveFields = (stage) => {
@@ -51,7 +52,7 @@ export const createStage = async (data, userId) => {
   };
   
   // Guardar en base de datos
-  const newStage = await stagesRepository.createStage(stageData);
+  const newStage = await stagesRepository.create(stageData);
   
   return removeSensitiveFields({
     id: newStage.id,
@@ -78,7 +79,7 @@ export const getStagesByChart = async (chartId, teamId, userId) => {
   }
   
   // Obtener etapas del chart
-  const stages = await stagesRepository.getStagesByChartId(chartId, teamId);
+  const stages = await stagesRepository.findByChartId(chartId, teamId);
   
   return stages.map(stage => removeSensitiveFields({
     id: stage.id,
@@ -94,7 +95,7 @@ export const getStagesByChart = async (chartId, teamId, userId) => {
 
 // OBTENER ETAPA POR ID
 export const getStageById = async (stageId, userId) => {
-  const stage = await stagesRepository.getStageById(stageId);
+  const stage = await stagesRepository.findById(stageId);
   
   if (!stage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -121,7 +122,7 @@ export const getStageById = async (stageId, userId) => {
 //ACTUALIZAR ETAPA
 export const updateStage = async (stageId, payload, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.getStageById(stageId);
+  const stage = await stagesRepository.findById(stageId);
   
   if (!stage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -156,7 +157,7 @@ export const updateStage = async (stageId, payload, userId) => {
   data.updatedAt = new Date();
   
   // Actualizar en base de datos
-  const updated = await stagesRepository.updateStage(stageId, data);
+  const updated = await stagesRepository.update(stageId, data);
   
   return removeSensitiveFields({
     id: updated.id,
@@ -173,7 +174,7 @@ export const updateStage = async (stageId, payload, userId) => {
 // AGREGAR TAREA A ETAPA
 export const addTaskToStage = async (stageId, taskId, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.getStageById(stageId);
+  const stage = await stagesRepository.findById(stageId);
   
   if (!stage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -196,13 +197,10 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
     throw new Error('TASK_ALREADY_IN_STAGE');
   }
   
-  // Agregar tarea a la lista
-  const updatedTaskIds = [...(stage.taskIds || []), taskId];
-  const updated = await stagesRepository.updateStage(stageId, {
-    taskIds: updatedTaskIds,
-    updatedAt: new Date()
-  });
-  
+  // Agregar tarea al array del stage y actualizar stageId en la tarea
+  const updated = await stagesRepository.addTask(stageId, taskId);
+  await tasksRepository.updateTask(taskId, { stageId, updatedAt: new Date() });
+
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
@@ -214,7 +212,7 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
 //REMOVER TAREA DE ETAPA
 export const removeTaskFromStage = async (stageId, taskId, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.getStageById(stageId);
+  const stage = await stagesRepository.findById(stageId);
   
   if (!stage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -231,13 +229,10 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
     throw new Error('TASK_NOT_IN_STAGE');
   }
   
-  // Remover tarea de la lista
-  const updatedTaskIds = (stage.taskIds || []).filter(id => id !== taskId);
-  const updated = await stagesRepository.updateStage(stageId, {
-    taskIds: updatedTaskIds,
-    updatedAt: new Date()
-  });
-  
+  // Remover tarea del array del stage y limpiar stageId en la tarea
+  const updated = await stagesRepository.removeTask(stageId, taskId);
+  await tasksRepository.updateTask(taskId, { stageId: null, updatedAt: new Date() });
+
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
@@ -248,8 +243,8 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
 //MOVER TAREA ENTRE ETAPAS
 export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, userId) => {
   // Verificar que ambas etapas existen
-  const fromStage = await stagesRepository.getStageById(fromStageId);
-  const toStage = await stagesRepository.getStageById(toStageId);
+  const fromStage = await stagesRepository.findById(fromStageId);
+  const toStage = await stagesRepository.findById(toStageId);
   
   if (!fromStage || !toStage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -272,20 +267,18 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
     throw new Error('DESTINATION_WIP_LIMIT_REACHED');
   }
   
-  // Remover de etapa origen
+  // Remover de etapa origen y agregar a etapa destino
+  const [, updatedToStage] = await Promise.all([
+    stagesRepository.removeTask(fromStageId, taskId),
+    stagesRepository.addTask(toStageId, taskId),
+  ]);
+
+  // Actualizar stageId en la tarea
+  await tasksRepository.updateTask(taskId, { stageId: toStageId, updatedAt: new Date() });
+
   const fromUpdatedTaskIds = (fromStage.taskIds || []).filter(id => id !== taskId);
-  await stagesRepository.updateStage(fromStageId, {
-    taskIds: fromUpdatedTaskIds,
-    updatedAt: new Date()
-  });
-  
-  // Agregar a etapa destino
   const toUpdatedTaskIds = [...(toStage.taskIds || []), taskId];
-  const updatedToStage = await stagesRepository.updateStage(toStageId, {
-    taskIds: toUpdatedTaskIds,
-    updatedAt: new Date()
-  });
-  
+
   return {
     fromStage: {
       id: fromStageId,
@@ -301,7 +294,7 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
 
 // ELIMINAR ETAPA (soft delete)
 export const deleteStage = async (stageId, userId) => {
-  const stage = await stagesRepository.getStageById(stageId);
+  const stage = await stagesRepository.findById(stageId);
   
   if (!stage) {
     throw new Error('STAGE_NOT_FOUND');
@@ -319,7 +312,7 @@ export const deleteStage = async (stageId, userId) => {
   }
   
   // Soft delete (borrado lógico)
-  const deleted = await stagesRepository.softDeleteStage(stageId);
+  const deleted = await stagesRepository.softDelete(stageId);
   
   return { deleted: true, stageId: stageId };
 };

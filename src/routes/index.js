@@ -24,5 +24,9 @@ router.use('/teams', teamsRoutes);
 router.use('/roles', rolesRoutes);
 // Add routes for tasks
 router.use('/tasks', tasksRoutes);
+router.use('/users', usersRoutes);
+
+//Add routes for stages
+router.use('/stages', stagesRoutes);
 
 export default router;
