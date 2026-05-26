@@ -9,6 +9,20 @@ const removeSensitiveFields = (team) => {
   return safeTeam;
 };
 
+const getEmbeddedMembership = (team, userId) => {
+  const members = team.members || [];
+
+  if (!members.includes(userId)) {
+    return null;
+  }
+
+  return {
+    teamId: team.id,
+    userId,
+    role: team.ownerId === userId ? 'OWNER' : 'MEMBER',
+  };
+};
+
 export const getTeamMembership = async (teamId, userId) => {
   const team = await teamsRepository.getTeamById(teamId);
 
@@ -16,7 +30,9 @@ export const getTeamMembership = async (teamId, userId) => {
     throw new Error('TEAM_NOT_FOUND');
   }
 
-  return teamsRepository.findTeamMember(teamId, userId);
+  const membership = await teamsRepository.findTeamMember(teamId, userId);
+
+  return membership || getEmbeddedMembership(team, userId);
 };
 
 export const assertTeamMembership = async (teamId, userId) => {
@@ -57,9 +73,22 @@ export const createTeam = async (data, userId) => {
 };
 
 export const getTeamsByUser = async (userId) => {
-  const teams = await teamsRepository.getTeamsByUserId(userId);
+  const memberships = await teamsRepository.getTeamMembersByUserId(userId);
+  const teamsByMembership = await Promise.all(
+    memberships.map((membership) =>
+      teamsRepository.getTeamById(membership.teamId)
+    )
+  );
+  const embeddedTeams = await teamsRepository.getTeamsByUserId(userId);
+  const teamsById = new Map();
   
-  return teams.map(removeSensitiveFields);
+  [...teamsByMembership, ...embeddedTeams]
+    .filter(Boolean)
+    .forEach((team) => {
+      teamsById.set(team.id, team);
+    });
+
+  return [...teamsById.values()].map(removeSensitiveFields);
 };
 
 export const getTeamById = async (teamId, userId) => {
@@ -68,9 +97,9 @@ export const getTeamById = async (teamId, userId) => {
     throw new Error('TEAM_NOT_FOUND');
   }
   
-  const members = team.members || [];
+  const membership = await getTeamMembership(teamId, userId);
 
-  if (!members.includes(userId)) {
+  if (!membership) {
     throw new Error('UNAUTHORIZED');
   }
   
