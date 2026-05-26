@@ -6,7 +6,7 @@ import { rolesSchema } from './roles.schema.js';
 
 const router = Router();
 
-//router.use(authMiddleware);//make it so this is exclusive to admins
+router.use(authMiddleware(4));//make it so this is exclusive to admins
 
 router.get('/',rolesController.getRoles);
 router.post('/', validate(rolesSchema.post), rolesController.postRole);
