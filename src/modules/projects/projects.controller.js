@@ -19,7 +19,7 @@ export const createProject = async (req, res) => {
 };
 
 export const getProjects = async (req, res) => {
-  const projects = await service.getProjects();
+  const projects = await service.getProjects(req.user.id);
   return successResponse(
     res,
     'Proyectos obtenidos',
