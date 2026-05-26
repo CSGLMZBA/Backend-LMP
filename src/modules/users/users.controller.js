@@ -88,7 +88,7 @@ export const getUsers = async (req, res) =>
 
 }
 
-export const getUser = async (req, res) => {
+export const patchStatus = async (req, res) => {
 try {
     const { userId } = req.params;
     
@@ -112,7 +112,7 @@ try {
   }
 };
 
-export const patchStatus = async (req, res) => {
+export const getUser = async (req, res) => {
 try {
     const { userId } = req.params;
     
