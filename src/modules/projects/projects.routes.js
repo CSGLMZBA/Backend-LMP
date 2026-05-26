@@ -6,8 +6,8 @@ import {
 import {
   createProjectSchema,
 } from './projects.schema.js';
-import { validate } from '../../middlewares/validate.middleware.js';
-import { authMiddleware } from '../../middlewares/auth.middleware.js';
+import { validate } from '../../middleware/validate.middleware.js';
+import { authMiddleware } from '../../middleware/auth.middleware.js';
 
 const router = Router();
 

@@ -1,4 +1,4 @@
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { userRepository } from './auth.repository.js';
 
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
@@ -50,7 +50,6 @@ export const register = async (data) => {
 
 
 export const login = async (data) => {
-
   const user = await userRepository.findByEmail(data.email);
   
   if (!user || !user.active) {
@@ -62,7 +61,7 @@ export const login = async (data) => {
     data.password,
     user.passwordHash
   );
-  console.log('password valid?', validPassword);
+
   if (!validPassword) {
     throw new Error('INVALID_CREDENTIALS');
   }
