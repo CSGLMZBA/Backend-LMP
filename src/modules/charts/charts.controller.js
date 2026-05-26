@@ -15,7 +15,7 @@ export const createChart = async (req, res) => {
     return successResponse(
       res,
       'Chart created successfully',
-      team,
+      chart,
       201
     );
   } catch (error) {
