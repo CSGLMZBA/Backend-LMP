@@ -7,6 +7,7 @@ import usersRoutes from '../modules/users/users.routes.js';
 import rolesRoutes from '../modules/roles/roles.routes.js';
 import stagesRoutes from '../modules/stages/stages.routes.js';
 import projectRoutes from '../modules/projects/projects.routes.js';
+import chartsRoutes from '../modules/charts/charts.routes.js';
 
 const router = Router();
 
@@ -31,5 +32,6 @@ router.use('/users', usersRoutes);
 router.use('/stages', stagesRoutes);
 
 router.use('/projects', projectRoutes);
+router.use('/charts', chartsRoutes);
 
 export default router;

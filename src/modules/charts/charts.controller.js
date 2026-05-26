@@ -42,7 +42,7 @@ export const getChart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { chartId } = req.params;
-    const chart = await teamsService.getChartById(chartId, userId);
+    const chart = await chartsService.getChartById(chartId, userId);
 
     return successResponse(
       res,

@@ -19,9 +19,4 @@ router.get('/',
 router.get('/:chartId', 
     chartsController.getChart);
 
-router.patch('/:chartId', 
-    validate(chartsSchema.updateParams, 'params'),
-    validate(chartsSchema.update), 
-    chartsController.updateChart);
-
 export default router;
