@@ -3,7 +3,6 @@ import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-import { authorize } from '../../middleware/authorize.middleware.js';
 import { userSchema } from './auth.schema.js';
 
 
@@ -17,10 +16,6 @@ router.post(
   authController.register
 );
 
-router.get(
-  '/:userId',
-  authController.getUser
-)
 
 router.post(
   '/login',
@@ -28,22 +23,26 @@ router.post(
   authController.login
 );
 
+router.post(
+  '/refresh',
+  authController.refresh);
 
-router.use(authMiddleware);
+router.use(authMiddleware());
 
+router.post(
+  '/logout',
+  authController.logout
+);
+
+router.get(
+  '/me',
+  authController.getSelf);
+  
 router.patch(
-  '/:userId',
-  validate(userSchema.updateParams, 'params'),
-  validate(userSchema.update),
-  authorize.self(),
-  authController.update
+  '/change-password',
+  validate(userSchema.updatePassword),
+  authController.updatePassword
 );
 
-router.delete(
-  '/:userId',
-  validate(userSchema.softDeleteParams, 'params'),
-  authorize.selfOrAdmin(),
-  authController.softDelete
-);
 
 export default router;

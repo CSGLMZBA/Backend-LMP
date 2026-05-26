@@ -15,13 +15,12 @@ const DEFAULT_USER_FIELDS = {
   passwordHash: null,
   lastOnline: null
 };
-
 const serializeDoc = (doc) => ({
   id: doc.id,
   ...doc.data()
 })
 
-export const userRepository = {
+export const usersRepository = {
 async findByEmail(email) {
   const snapshot = await db
     .collection(usersCollectionName)
@@ -74,7 +73,6 @@ async findByUserName (userName) {
     ...snapshot.docs[0].data(),
   };
 },
-
 async findByUserNameActive (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
@@ -102,7 +100,15 @@ async findById(id) {
 
   return serializeDoc(doc);
 },
+async getUsers() {
+  const snapshot = await db.collection(usersCollectionName).get();
 
+  if (snapshot.empty) {
+    return [];
+  }
+
+  return snapshot.docs.map(serializeDoc);
+},
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
     ...DEFAULT_USER_FIELDS,
@@ -127,31 +133,17 @@ async update(id, data) {
 
   return serializeDoc(updated)
 },
-async login(id) {
+async softDelete(id) {
   const docRef = db.collection(usersCollectionName).doc(id);
 
   await docRef.update({
-    status: "online",
-    lastOnline: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp()
-  })
-
-  const updated = await docRef.get()
-
-  return serializeDoc(updated)
-},
-async logout(id)
-{
-  const docRef = db.collection(usersCollectionName).doc(id);
-  await docRef.update({
-    tokenVersion: FieldValue.increment(1),
-    status: "offline",
-    lastOnline: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp()
+    active: false,
+    updatedAt: FieldValue.serverTimestamp(),
+    deletedAt: FieldValue.serverTimestamp(),
   });
+
   const updated = await docRef.get();
+
   return serializeDoc(updated);
-
-},
-
+}
 };

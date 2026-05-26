@@ -1,6 +1,6 @@
 import express from 'express';
 import { validate } from '../../middleware/validate.middleware.js';
-import { authMiddleware } from '../../middleware/auth.Middleware.js';
+import { authMiddleware } from '../../middleware/auth.middleware.js';
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -13,7 +13,7 @@ import * as tasksController from './task.controller.js';
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware(2));
 
 // ============ RUTAS PRINCIPALES ============
 
