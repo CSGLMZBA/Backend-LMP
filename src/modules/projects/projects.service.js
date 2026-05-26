@@ -2,7 +2,7 @@ import * as repository from './projects.repository.js';
 import * as teamsService from '../teams/teams.service.js';
 
 export const createProject = async (data, userId) => {
-  await teamsService.assertTeamMembership(data.teamId, userId);
+  await teamsService.assertTeamRole(data.teamId, userId, ['OWNER', 'MANAGER']);
 
   return repository.createProject({
     name: data.name,
@@ -27,11 +27,57 @@ export const getProjects = async (userId) => {
 export const getProjectById = async (id, userId) => {
   const project = await repository.getProjectById(id);
 
-  if (!project) {
+  if (!project || project.status === 'DELETED') {
     throw new Error('PROJECT_NOT_FOUND');
   }
 
   await teamsService.assertTeamMembership(project.teamId, userId);
 
   return project;
+};
+
+export const updateProject = async (id, data, userId) => {
+  const project = await repository.getProjectById(id);
+
+  if (!project || project.status === 'DELETED') {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  await teamsService.assertTeamRole(project.teamId, userId, [
+    'OWNER',
+    'MANAGER',
+  ]);
+
+  return repository.updateProject(id, data);
+};
+
+export const updateProjectStatus = async (id, status, userId) => {
+  const project = await repository.getProjectById(id);
+
+  if (!project || project.status === 'DELETED') {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  await teamsService.assertTeamRole(project.teamId, userId, [
+    'OWNER',
+    'MANAGER',
+  ]);
+
+  return repository.updateProject(id, { status });
+};
+
+export const deleteProject = async (id, userId) => {
+  const project = await repository.getProjectById(id);
+
+  if (!project || project.status === 'DELETED') {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  await teamsService.assertTeamRole(project.teamId, userId, ['OWNER']);
+
+  return repository.updateProject(id, {
+    status: 'DELETED',
+    deletedAt: new Date(),
+    deletedBy: userId,
+  });
 };

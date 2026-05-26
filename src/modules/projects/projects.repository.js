@@ -1,4 +1,7 @@
 import { db } from '../../config/firebase.js';
+import admin from 'firebase-admin';
+
+const { FieldValue } = admin.firestore;
 
 const projectsCollectionName = 'projects'; // Easier to update later and to avoid typos
 
@@ -28,6 +31,7 @@ export const getProjectsByTeamId = async (teamId) => {
   const snapshot = await db
     .collection(projectsCollectionName)
     .where('teamId', '==', teamId)
+    .where('status', '!=', 'DELETED')
     .get();
 
   return snapshot.docs.map(doc => ({
@@ -49,5 +53,21 @@ export const getProjectById = async (id) => {
   return {
     id: doc.id,
     ...doc.data(),
+  };
+};
+
+export const updateProject = async (id, data) => {
+  const docRef = db.collection(projectsCollectionName).doc(id);
+
+  await docRef.update({
+    ...data,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return {
+    id: updated.id,
+    ...updated.data(),
   };
 };
