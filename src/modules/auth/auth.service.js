@@ -5,27 +5,26 @@ import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '.
 
 import { env } from '../../config/env.js';
 
-const removeSensitiveFields = (user) => {
-  if (!user) return user
+const removeSensitiveFields = (data) => {
+  if (!data) return data;
 
-  const clean = { ...user }
-  delete clean.passwordHash
-  delete clean.tokenVersion
+  const sanitize = ({ passwordHash, tokenVersion, ...user }) => user;
 
-  return clean
-
-} 
+  return Array.isArray(data)
+    ? data.map(sanitize)
+    : sanitize(data);
+};
 
 export const register = async (data) => {
-  let existingUser = await userRepository.findByEmail(data.email);
+  let existingUser = await userRepository.findByEmailActive(data.email);
 
-  if (existingUser && existingUser.active) {
+  if (existingUser) {
     throw new Error('EMAIL_ALREADY_IN_USE');
   }
 
-  existingUser = await userRepository.findByUserName(data.userName);
+  existingUser = await userRepository.findByUserNameActive(data.userName);
 
-  if (existingUser && existingUser.active) {
+  if (existingUser) {
     throw new Error('USERNAME_ALREADY_IN_USE');
   }
 
@@ -39,7 +38,8 @@ export const register = async (data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    rol: 'cliente',
+    role: 'client',
+    status: "offline",
     active: true,
     createdAt: new Date(),
     tokenVersion: 0
@@ -50,9 +50,10 @@ export const register = async (data) => {
 
 
 export const login = async (data) => {
-  const user = await userRepository.findByEmail(data.email);
+
+  const user = await userRepository.findByEmailActive(data.email);
   
-  if (!user || !user.active) {
+  if (!user) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
@@ -68,15 +69,16 @@ export const login = async (data) => {
 
   const payload = {
     id: user.id,
-    rol: user.rol,
+    role: user.role,
     tokenVersion: user.tokenVersion,
   };
 
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
+  const updatedUser = await userRepository.login(user.id);
 
   return {
-    user: removeSensitiveFields(user),
+    user: removeSensitiveFields(updatedUser),
     accessToken,
     refreshToken,
   };
@@ -84,12 +86,11 @@ export const login = async (data) => {
 
 export const logout = async (userId) => {
   const user = await userRepository.findById(userId);
-
   if (!user || !user.active) {
     throw new Error('INVALID_CREDENTIALS');
   }
 
-  await userRepository.incrementTokenVersion(userId);
+  const result = await userRepository.logout(userId);
 };
 
 
@@ -105,9 +106,8 @@ export const refresh = async (refreshToken) => {
 
     const payload = {
       id: user.id,
-      userName: user.userName,
-      email: user.email,
-      rol: user.rol,
+      role: user.role,
+      tokenVersion: user.tokenVersion,
     };
 
     const accessToken = generateAccessToken(payload);
@@ -149,7 +149,7 @@ export const updatePassword = async (id, data) => {
     passwordHash: newPasswordHash,
   };
 
-  // 4. update user
+
   const updated = await userRepository.update(id, updateData);
 
   return removeSensitiveFields(updated);

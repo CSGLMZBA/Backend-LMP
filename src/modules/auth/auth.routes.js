@@ -3,7 +3,6 @@ import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-import { authorize } from '../../middleware/authorize.middleware.js';
 import { userSchema } from './auth.schema.js';
 
 
@@ -28,7 +27,7 @@ router.post(
   '/refresh',
   authController.refresh);
 
-router.use(authMiddleware);
+router.use(authMiddleware());
 
 router.post(
   '/logout',
@@ -38,8 +37,7 @@ router.post(
 router.get(
   '/me',
   authController.getSelf);
-
-
+  
 router.patch(
   '/change-password',
   validate(userSchema.updatePassword),

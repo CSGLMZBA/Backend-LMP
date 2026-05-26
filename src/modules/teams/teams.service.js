@@ -4,25 +4,36 @@ import { env } from '../../config/env.js';
 
 export const createTeam = async (data, userId) => {
   // Encrypt the password so we don't store plain passwords in the databased as specified in the document in the Teams channel
+  const now = new Date();
   const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
 
   // Create team object with user Id (creatorId and hashed password
   const teamData = {
     name: data.name,
+    description: data.description || '',
     password: hashedPassword,
-    creatorId: userId,
-    createdAt: new Date(),
+    ownerId: userId,
+    status: 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
     members: [userId], // Add creator as first member
   };
 
   // Save to database
   const newTeam = await teamsRepository.createTeam(teamData);
 
+  await repository.createTeamMember({
+    teamId: team.id,
+    userId,
+    role: 'OWNER',
+    joinedAt: now,
+  });
+
   // Return without exposing the hashed password
   return {
     id: newTeam.id,
     name: newTeam.name,
-    creatorId: newTeam.creatorId,
+    ownerId: newTeam.creatorId,
     members: newTeam.members,
     createdAt: newTeam.createdAt,
   };

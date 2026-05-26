@@ -1,0 +1,492 @@
+import * as stagesService from './stages.service.js';
+import {
+  successResponse,
+  errorResponse,
+} from '../../utils/response.js';
+
+// CREAR ETAPA
+export const createStage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const stage = await stagesService.createStage(
+      req.validatedData,
+      userId
+    );
+
+    return successResponse(
+      res,
+      'Stage created successfully',
+      stage,
+      201
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NAME_REQUIRED') {
+      return errorResponse(
+        res,
+        'Stage name is required',
+        'STAGE_NAME_REQUIRED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'TEAM_ID_REQUIRED') {
+      return errorResponse(
+        res,
+        'Team ID is required',
+        'TEAM_ID_REQUIRED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'CHART_ID_REQUIRED') {
+      return errorResponse(
+        res,
+        'Chart ID is required',
+        'CHART_ID_REQUIRED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to create stages for this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error creating stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// OBTENER ETAPAS POR CHART
+export const getStagesByChart = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chartId, teamId } = req.params;
+    
+    const stages = await stagesService.getStagesByChart(chartId, teamId, userId);
+
+    return successResponse(
+      res,
+      'Stages retrieved successfully',
+      stages
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to view stages for this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error retrieving stages',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// OBTENER ETAPA POR ID
+export const getStageById = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { stageId } = req.params;
+    
+    const stage = await stagesService.getStageById(stageId, userId);
+
+    return successResponse(
+      res,
+      'Stage retrieved successfully',
+      stage
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to view this stage',
+        'UNAUTHORIZED_STAGE_ACCESS',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error retrieving stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// ACTUALIZAR ETAPA
+export const updateStage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { stageId } = req.params;
+    const data = req.validatedData;
+    
+    const stage = await stagesService.updateStage(stageId, data, userId);
+
+    return successResponse(
+      res,
+      'Stage updated successfully',
+      stage
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'STAGE_NAME_REQUIRED') {
+      return errorResponse(
+        res,
+        'Stage name is required',
+        'STAGE_NAME_REQUIRED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'WIP_LIMIT_INVALID') {
+      return errorResponse(
+        res,
+        'WIP limit must be 0 or greater',
+        'WIP_LIMIT_INVALID',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to update this stage',
+        'UNAUTHORIZED_STAGE_UPDATE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error updating stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// AGREGAR TAREA A ETAPA
+export const addTaskToStage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { stageId } = req.params;
+    const { taskId } = req.validatedData;
+    
+    const stage = await stagesService.addTaskToStage(stageId, taskId, userId);
+
+    return successResponse(
+      res,
+      'Task added to stage successfully',
+      stage
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'WIP_LIMIT_REACHED') {
+      return errorResponse(
+        res,
+        'Work in progress limit reached for this stage',
+        'WIP_LIMIT_REACHED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'TASK_ALREADY_IN_STAGE') {
+      return errorResponse(
+        res,
+        'Task is already in this stage',
+        'TASK_ALREADY_IN_STAGE',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to modify this stage',
+        'UNAUTHORIZED_STAGE_UPDATE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error adding task to stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// REMOVER TAREA DE ETAPA
+export const removeTaskFromStage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { stageId, taskId } = req.params;
+    
+    const stage = await stagesService.removeTaskFromStage(stageId, taskId, userId);
+
+    return successResponse(
+      res,
+      'Task removed from stage successfully',
+      stage
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'TASK_NOT_IN_STAGE') {
+      return errorResponse(
+        res,
+        'Task is not in this stage',
+        'TASK_NOT_IN_STAGE',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to modify this stage',
+        'UNAUTHORIZED_STAGE_UPDATE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error removing task from stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// MOVER TAREA ENTRE ETAPAS
+export const moveTaskBetweenStages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { taskId, fromStageId, toStageId } = req.validatedData;
+    
+    const result = await stagesService.moveTaskBetweenStages(
+      taskId,
+      fromStageId,
+      toStageId,
+      userId
+    );
+
+    return successResponse(
+      res,
+      'Task moved successfully',
+      result
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'STAGES_FROM_DIFFERENT_TEAMS') {
+      return errorResponse(
+        res,
+        'Stages must belong to the same team',
+        'STAGES_FROM_DIFFERENT_TEAMS',
+        [],
+        400
+      );
+    }
+    if (error.message === 'DESTINATION_WIP_LIMIT_REACHED') {
+      return errorResponse(
+        res,
+        'Work in progress limit reached in destination stage',
+        'DESTINATION_WIP_LIMIT_REACHED',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to move tasks',
+        'UNAUTHORIZED_STAGE_UPDATE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error moving task',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// ELIMINAR ETAPA
+export const deleteStage = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { stageId } = req.params;
+    
+    const result = await stagesService.deleteStage(stageId, userId);
+
+    return successResponse(
+      res,
+      'Stage deleted successfully',
+      result
+    );
+  } catch (error) {
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'STAGE_HAS_TASKS') {
+      return errorResponse(
+        res,
+        'Cannot delete stage that has tasks',
+        'STAGE_HAS_TASKS',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_DELETE') {
+      return errorResponse(
+        res,
+        'You do not have permission to delete this stage',
+        'UNAUTHORIZED_STAGE_DELETE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error deleting stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+// CREAR ETAPAS POR DEFECTO
+export const createDefaultStages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chartId, teamId } = req.validatedData;
+    
+    const stages = await stagesService.createDefaultStages(chartId, teamId, userId);
+
+    return successResponse(
+      res,
+      'Default stages created successfully',
+      stages,
+      201
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to create stages for this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error creating default stages',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};

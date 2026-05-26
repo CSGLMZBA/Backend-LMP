@@ -13,7 +13,7 @@ import * as tasksController from './task.controller.js';
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware(2));
 
 // ============ RUTAS PRINCIPALES ============
 

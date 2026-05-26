@@ -15,13 +15,12 @@ const DEFAULT_USER_FIELDS = {
   passwordHash: null,
   lastOnline: null
 };
-
 const serializeDoc = (doc) => ({
   id: doc.id,
   ...doc.data()
 })
 
-export const userRepository = {
+export const usersRepository = {
 async findByEmail(email) {
   const snapshot = await db
     .collection(usersCollectionName)
@@ -51,11 +50,11 @@ async findByEmailActive(email) {
     return null;
   }
 
-    return {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data(),
-    };
-  },
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
 
 async findByUserName (userName) {
   const snapshot = await db
@@ -74,7 +73,6 @@ async findByUserName (userName) {
     ...snapshot.docs[0].data(),
   };
 },
-
 async findByUserNameActive (userName) {
   const snapshot = await db
     .collection(usersCollectionName)
@@ -83,26 +81,34 @@ async findByUserNameActive (userName) {
     .limit(1)
     .get();
 
-    if (snapshot.empty) {
-      return null;
-    }
+  if (snapshot.empty) {
+    return null;
+  }
 
-    return {
-      id: snapshot.docs[0].id,
-      ...snapshot.docs[0].data(),
-    };
-  },
+  return {
+    id: snapshot.docs[0].id,
+    ...snapshot.docs[0].data(),
+  };
+},
 
-  async findById(id) {
-    const doc = await db.collection(usersCollectionName).doc(id).get();
+async findById(id) {
+  const doc = await db.collection(usersCollectionName).doc(id).get();
 
-    if (!doc.exists) {
-      return null;
-    }
+  if (!doc.exists) {
+    return null;
+  }
 
-    return serializeDoc(doc);
-  },
+  return serializeDoc(doc);
+},
+async getUsers() {
+  const snapshot = await db.collection(usersCollectionName).get();
 
+  if (snapshot.empty) {
+    return [];
+  }
+
+  return snapshot.docs.map(serializeDoc);
+},
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
     ...DEFAULT_USER_FIELDS,
@@ -111,28 +117,15 @@ async create(data) {
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-    const created = await docRef.get();
+  const created = await docRef.get();
 
-    return serializeDoc(created);
-  },
-  async update(id, data) {
-    const docRef = db.collection(usersCollectionName).doc(id)
-
-    await docRef.update({
-      ...data,
-      updatedAt: FieldValue.serverTimestamp()
-    })
-
-    const updated = await docRef.get()
-
-  return serializeDoc(updated)
+  return serializeDoc(created);
 },
-async login(id) {
-  const docRef = db.collection(usersCollectionName).doc(id);
+async update(id, data) {
+  const docRef = db.collection(usersCollectionName).doc(id)
 
   await docRef.update({
-    status: "online",
-    lastOnline: FieldValue.serverTimestamp(),
+    ...data,
     updatedAt: FieldValue.serverTimestamp()
   })
 
@@ -140,18 +133,17 @@ async login(id) {
 
   return serializeDoc(updated)
 },
-async logout(id)
-{
+async softDelete(id) {
   const docRef = db.collection(usersCollectionName).doc(id);
+
   await docRef.update({
-    tokenVersion: FieldValue.increment(1),
-    status: "offline",
-    lastOnline: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp()
+    active: false,
+    updatedAt: FieldValue.serverTimestamp(),
+    deletedAt: FieldValue.serverTimestamp(),
   });
+
   const updated = await docRef.get();
+
   return serializeDoc(updated);
-
-},
-
+}
 };

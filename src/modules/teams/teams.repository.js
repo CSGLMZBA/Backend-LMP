@@ -8,6 +8,17 @@ export const createTeam = async (teamData) => {
   return { id: docRef.id, ...teamData };
 };
 
+export const createTeamMember = async (data) => {
+  const docRef = await teamMembersCollection.add(data);
+
+  return {
+    id: docRef.id,
+    ...data,
+  };
+};
+
+
+
 export const getTeamById = async (teamId) => {
   const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
   if (!teamDoc.exists) {
