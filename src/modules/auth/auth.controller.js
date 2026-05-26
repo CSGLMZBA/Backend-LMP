@@ -14,7 +14,7 @@ export const register = async (req, res) => {
     return successResponse(
       res,
       'User Registered',
-      user,
+      { user },
       201
     );
   } catch (error) {
@@ -23,6 +23,16 @@ export const register = async (req, res) => {
         res,
         'Theres already a user with that email',
         'EMAIL_ALREADY_IN_USE',
+        [],
+        400
+      );
+    }
+
+    if (error.message === 'USERNAME_ALREADY_IN_USE') {
+      return errorResponse(
+        res,
+        'Theres already a user with that username',
+        'USERNAME_ALREADY_IN_USE',
         [],
         400
       );
@@ -57,6 +67,16 @@ export const login = async (req, res) => {
         'INVALID_CREDENTIALS',
         [],
         401
+      );
+    }
+
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
       );
     }
 
@@ -175,7 +195,7 @@ export const getSelf = async (req, res) => {
     return successResponse(
       res,
       'User info retrieved successfully',
-      req.user
+      { user: req.user }
     );
   } catch (error) {
     return errorResponse(

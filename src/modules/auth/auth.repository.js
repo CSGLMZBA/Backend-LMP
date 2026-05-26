@@ -8,7 +8,7 @@ const DEFAULT_USER_FIELDS = {
   displayName: "",
   userName: "",
   email: "",
-  role: "client",
+  role: "user",
   status: "offline",
   active: true,
   tokenVersion: 0,

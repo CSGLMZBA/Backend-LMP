@@ -38,7 +38,7 @@ export const register = async (data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    role: 'client',
+    role: 'user',
     status: "offline",
     active: true,
     createdAt: new Date(),
@@ -90,7 +90,9 @@ export const logout = async (userId) => {
     throw new Error('INVALID_CREDENTIALS');
   }
 
-  const result = await userRepository.logout(userId);
+  await userRepository.logout(userId);
+
+  return { loggedOut: true };
 };
 
 
@@ -116,6 +118,7 @@ export const refresh = async (refreshToken) => {
     const newRefreshToken = generateRefreshToken(payload);
 
     return {
+      user: removeSensitiveFields(user),
       accessToken,
       refreshToken: newRefreshToken,
     };
@@ -128,7 +131,7 @@ export const updatePassword = async (id, data) => {
   const user = await userRepository.findById(id);
 
   if (!user) {
-    throw createError('User not found', 404, 'USER_NOT_FOUND');
+    throw new Error('USER_NOT_FOUND');
   }
 
   const validPassword = await bcrypt.compare(
