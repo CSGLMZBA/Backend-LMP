@@ -24,7 +24,7 @@ export const authMiddleware = (requiredLevel = 0) => {
       const user = await userRepository.findById(decoded.id);
 
       const role = await rolesRepository.findByNameActive(decoded.role);
-      const level = role.roleLevel;
+
       
       if (!role)
       {
@@ -36,6 +36,7 @@ export const authMiddleware = (requiredLevel = 0) => {
           401
         );
       }
+      const level = role.roleLevel;
       if(level<requiredLevel)
       {
         return errorResponse(
