@@ -6,7 +6,6 @@ export const userSchema = {
     userName: z.string().min(3),
     email: z.string().email(),
     password: z.string().min(6),
-    active: z.boolean().optional(),
   }),
 
   login: z.object({

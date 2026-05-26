@@ -7,14 +7,14 @@ import {
 
 export const register = async (req, res) => {
   try {
-    const usuario = await authService.register(
+    const user = await authService.register(
       req.validatedData
     );
 
     return successResponse(
       res,
       'User Registered',
-      usuario,
+      user,
       201
     );
   } catch (error) {
@@ -143,7 +143,6 @@ export const logout = async (req, res) => {
     const result = await authService.logout(
       userId
     );
-
     return successResponse(
       res,
       'Logged out succesfully',
@@ -163,7 +162,7 @@ export const logout = async (req, res) => {
     return errorResponse(
       res,
       'Logout error',
-      'LOGOUT_UPDATE_ERROR',
+      'LOGOUT_ERROR',
       [],
       500
     );

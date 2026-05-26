@@ -7,10 +7,8 @@ import * as teamsSchema from './teams.schema.js';
 const router = Router();
 
 // Protect team routes 
-router.use(authMiddleware);
+router.use(authMiddleware());
 
-// POST /api/teams/create Create a new team
-router.post('/', validate(teamsSchema.create), teamsController.createTeam);
 
 // GET /api/teams/myTeams Get all teams that the current user is in
 router.get('/', teamsController.getMyTeams);
@@ -18,7 +16,9 @@ router.get('/', teamsController.getMyTeams);
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
 router.get('/:teamId', teamsController.getTeam);
 
-
+router.use(authMiddleware(2));
+// POST /api/teams/create Create a new team
+router.post('/', validate(teamsSchema.create), teamsController.createTeam);
 // TO DO:
 
 // PUT /api/teams/update/:teamId Update team
