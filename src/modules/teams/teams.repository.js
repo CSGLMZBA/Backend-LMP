@@ -1,6 +1,7 @@
 import { db } from '../../config/firebase.js';
 
-const teamsCollectionName = 'teams' 
+const teamsCollectionName = 'teams';
+const teamMembersCollectionName = 'team_members';
 
 export const createTeam = async (teamData) => {
   const teamsRef = db.collection(teamsCollectionName);
@@ -9,6 +10,7 @@ export const createTeam = async (teamData) => {
 };
 
 export const createTeamMember = async (data) => {
+  const teamMembersCollection = db.collection(teamMembersCollectionName);
   const docRef = await teamMembersCollection.add(data);
 
   return {
@@ -16,8 +18,6 @@ export const createTeamMember = async (data) => {
     ...data,
   };
 };
-
-
 
 export const getTeamById = async (teamId) => {
   const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
