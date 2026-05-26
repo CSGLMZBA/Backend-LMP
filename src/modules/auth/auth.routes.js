@@ -37,8 +37,7 @@ router.post(
 router.get(
   '/me',
   authController.getSelf);
-
-
+  
 router.patch(
   '/change-password',
   validate(userSchema.updatePassword),
