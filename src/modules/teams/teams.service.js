@@ -9,6 +9,26 @@ const removeSensitiveFields = (team) => {
   return safeTeam;
 };
 
+export const getTeamMembership = async (teamId, userId) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team) {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  return teamsRepository.findTeamMember(teamId, userId);
+};
+
+export const assertTeamMembership = async (teamId, userId) => {
+  const membership = await getTeamMembership(teamId, userId);
+
+  if (!membership) {
+    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
+  }
+
+  return membership;
+};
+
 export const createTeam = async (data, userId) => {
   const now = new Date();
   const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
