@@ -9,20 +9,6 @@ const removeSensitiveFields = (team) => {
   return safeTeam;
 };
 
-const getEmbeddedMembership = (team, userId) => {
-  const members = team.members || [];
-
-  if (!members.includes(userId)) {
-    return null;
-  }
-
-  return {
-    teamId: team.id,
-    userId,
-    role: team.ownerId === userId ? 'OWNER' : 'MEMBER',
-  };
-};
-
 export const getTeamMembership = async (teamId, userId) => {
   const team = await teamsRepository.getTeamById(teamId);
 
@@ -30,9 +16,7 @@ export const getTeamMembership = async (teamId, userId) => {
     throw new Error('TEAM_NOT_FOUND');
   }
 
-  const membership = await teamsRepository.findTeamMember(teamId, userId);
-
-  return membership || getEmbeddedMembership(team, userId);
+  return teamsRepository.findTeamMember(teamId, userId);
 };
 
 export const assertTeamMembership = async (teamId, userId) => {
@@ -57,7 +41,6 @@ export const createTeam = async (data, userId) => {
     status: 'ACTIVE',
     createdAt: now,
     updatedAt: now,
-    members: [userId], // Add creator as first member
   };
 
   const newTeam = await teamsRepository.createTeam(teamData);
@@ -79,10 +62,9 @@ export const getTeamsByUser = async (userId) => {
       teamsRepository.getTeamById(membership.teamId)
     )
   );
-  const embeddedTeams = await teamsRepository.getTeamsByUserId(userId);
   const teamsById = new Map();
   
-  [...teamsByMembership, ...embeddedTeams]
+  teamsByMembership
     .filter(Boolean)
     .forEach((team) => {
       teamsById.set(team.id, team);

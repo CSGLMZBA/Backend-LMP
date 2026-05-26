@@ -68,15 +68,3 @@ export const getTeamById = async (teamId) => {
   }
   return { id: teamDoc.id, ...teamDoc.data() };
 };
-
-export const getTeamsByUserId = async (userId) => {
-  const teamsSnapshot = await db
-    .collection(teamsCollectionName)
-    .where('members', 'array-contains', userId) // Check that we are a member
-    .get();
-  
-  return teamsSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
-};

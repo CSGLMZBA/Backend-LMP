@@ -1,10 +1,8 @@
-import bcrypt from 'bcryptjs';
 import * as chartsRepository from './charts.repository.js';
-import * as teamsRepository from '../teams/teams.repository.js';
-import { env } from '../../config/env.js';
+import * as teamsService from '../teams/teams.service.js';
 
 export const createChart = async (data, userId) => {
-  // Encrypt the password so we don't store plain passwords in the databased as specified in the document in the Teams channel
+  await teamsService.assertTeamMembership(data.teamId, userId);
 
   const chartData = {
     name: data.name,
@@ -21,7 +19,11 @@ export const createChart = async (data, userId) => {
 };
 
 export const getChartsByUser = async (userId) => {
-  const charts = await chartsRepository.getChartsByUserId(userId);
+  const teams = await teamsService.getTeamsByUser(userId);
+  const snapshots = await Promise.all(
+    teams.map((team) => chartsRepository.getChartsByTeamId(team.id))
+  );
+  const charts = snapshots.flat();
   
   return charts.map(chart => ({
     id: chart.id,
@@ -38,13 +40,15 @@ export const getChartById = async (chartId, userId) => {
   if (!chart) {
     throw new Error('CHART_NOT_FOUND');
   }
-  const team = await teamsRepository.getTeamById(chart.teamId);
-  if (!team) {
-    throw new Error('CHART_HAS_NO_TEAM');
-  }
-  // Verify user is a member of the team so they can view it
-  if (!team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED');
+
+  try {
+    await teamsService.assertTeamMembership(chart.teamId, userId);
+  } catch (error) {
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    throw error;
   }
   
   return {

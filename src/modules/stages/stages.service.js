@@ -1,5 +1,5 @@
 import { stagesRepository } from './stages.repository.js';
-import * as teamsRepository from '../teams/teams.repository.js';
+import * as teamsService from '../teams/teams.service.js';
 import * as tasksRepository from '../Task/task.repository.js';
 
 // Helper para remover campos sensibles (si los hubiera)
@@ -11,6 +11,22 @@ const removeSensitiveFields = (stage) => {
   // delete clean.someSensitiveField;
   
   return clean;
+};
+
+const assertStageTeamAccess = async (
+  teamId,
+  userId,
+  errorCode = 'UNAUTHORIZED_TEAM_ACCESS'
+) => {
+  try {
+    return await teamsService.assertTeamMembership(teamId, userId);
+  } catch (error) {
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      throw new Error(errorCode);
+    }
+
+    throw error;
+  }
 };
 
 // CREAR ETAPA
@@ -28,15 +44,7 @@ export const createStage = async (data, userId) => {
     throw new Error('CHART_ID_REQUIRED');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(data.teamId);
-  if (!team) {
-    throw new Error('TEAM_NOT_FOUND');
-  }
-  
-  if (!team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
-  }
+  await assertStageTeamAccess(data.teamId, userId);
   
   // Crear objeto de etapa
   const stageData = {
@@ -68,15 +76,7 @@ export const createStage = async (data, userId) => {
 
 // OBTENER ETAPAS POR CHART 
 export const getStagesByChart = async (chartId, teamId, userId) => {
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(teamId);
-  if (!team) {
-    throw new Error('TEAM_NOT_FOUND');
-  }
-  
-  if (!team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
-  }
+  await assertStageTeamAccess(teamId, userId);
   
   // Obtener etapas del chart
   const stages = await stagesRepository.findByChartId(chartId, teamId);
@@ -101,11 +101,11 @@ export const getStageById = async (stageId, userId) => {
     throw new Error('STAGE_NOT_FOUND');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(stage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_ACCESS');
-  }
+  await assertStageTeamAccess(
+    stage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_ACCESS'
+  );
   
   return removeSensitiveFields({
     id: stage.id,
@@ -128,11 +128,11 @@ export const updateStage = async (stageId, payload, userId) => {
     throw new Error('STAGE_NOT_FOUND');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(stage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_UPDATE');
-  }
+  await assertStageTeamAccess(
+    stage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_UPDATE'
+  );
   
   // Preparar datos para actualizar
   const data = { ...payload };
@@ -180,11 +180,11 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
     throw new Error('STAGE_NOT_FOUND');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(stage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_UPDATE');
-  }
+  await assertStageTeamAccess(
+    stage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_UPDATE'
+  );
   
   // Verificar WIP limit si existe
   const currentTaskCount = (stage.taskIds || []).length;
@@ -218,11 +218,11 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
     throw new Error('STAGE_NOT_FOUND');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(stage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_UPDATE');
-  }
+  await assertStageTeamAccess(
+    stage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_UPDATE'
+  );
   
   // Verificar que la tarea está en la etapa
   if (!(stage.taskIds || []).includes(taskId)) {
@@ -255,11 +255,11 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
     throw new Error('STAGES_FROM_DIFFERENT_TEAMS');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(fromStage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_UPDATE');
-  }
+  await assertStageTeamAccess(
+    fromStage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_UPDATE'
+  );
   
   // Verificar WIP limit de la etapa destino
   const toStageTaskCount = (toStage.taskIds || []).length;
@@ -300,11 +300,11 @@ export const deleteStage = async (stageId, userId) => {
     throw new Error('STAGE_NOT_FOUND');
   }
   
-  // Verificar que el usuario pertenece al equipo
-  const team = await teamsRepository.getTeamById(stage.teamId);
-  if (!team || !team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED_STAGE_DELETE');
-  }
+  await assertStageTeamAccess(
+    stage.teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_DELETE'
+  );
   
   // Verificar que la etapa no tenga tareas
   if ((stage.taskIds || []).length > 0) {
