@@ -7,7 +7,7 @@ export const createChart = async (data, userId) => {
   const chartData = {
     name: data.name,
     teamId: data.teamId,
-    stageIds: data.stages,
+    stageIds: data.stageIds,
     creatorId: userId,
     createdAt: new Date(),
   };
@@ -29,7 +29,7 @@ export const getChartsByUser = async (userId) => {
     id: chart.id,
     name: chart.name,
     teamId: chart.teamId,
-    stageIds: chart.stages,
+    stageIds: chart.stageIds,
     creatorId: chart.creatorId,
     createdAt: chart.createdAt,
   }));
@@ -55,7 +55,7 @@ export const getChartById = async (chartId, userId) => {
     id: chart.id,
     name: chart.name,
     teamId: chart.teamId,
-    stageIds: chart.stages,
+    stageIds: chart.stageIds,
     creatorId: chart.creatorId,
     createdAt: chart.createdAt
   };
