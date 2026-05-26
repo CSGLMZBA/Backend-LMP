@@ -26,6 +26,13 @@ export const createTeam = async (data, userId) => {
 
   const newTeam = await teamsRepository.createTeam(teamData);
 
+  await teamsRepository.createTeamMember({
+    teamId: newTeam.id,
+    userId,
+    role: 'OWNER',
+    joinedAt: now,
+  });
+
   return removeSensitiveFields(newTeam);
 };
 
