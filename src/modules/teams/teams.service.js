@@ -29,6 +29,16 @@ export const assertTeamMembership = async (teamId, userId) => {
   return membership;
 };
 
+export const assertTeamRole = async (teamId, userId, allowedRoles) => {
+  const membership = await assertTeamMembership(teamId, userId);
+
+  if (!allowedRoles.includes(membership.role)) {
+    throw new Error('INSUFFICIENT_TEAM_ROLE');
+  }
+
+  return membership;
+};
+
 export const createTeam = async (data, userId) => {
   const now = new Date();
   const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
@@ -86,4 +96,80 @@ export const getTeamById = async (teamId, userId) => {
   }
   
   return removeSensitiveFields(team);
+};
+
+export const joinTeam = async (teamId, userId, password) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team) {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  if (team.status !== 'ACTIVE') {
+    throw new Error('TEAM_NOT_ACTIVE');
+  }
+
+  const existingMember = await teamsRepository.findTeamMember(teamId, userId);
+
+  if (existingMember) {
+    throw new Error('USER_ALREADY_IN_TEAM');
+  }
+
+  const validPassword = await bcrypt.compare(password, team.password);
+
+  if (!validPassword) {
+    throw new Error('INVALID_TEAM_PASSWORD');
+  }
+
+  return teamsRepository.createTeamMember({
+    teamId,
+    userId,
+    role: 'MEMBER',
+    joinedAt: new Date(),
+  });
+};
+
+export const getTeamMembers = async (teamId, userId) => {
+  await assertTeamMembership(teamId, userId);
+
+  return teamsRepository.getTeamMembersByTeamId(teamId);
+};
+
+export const addTeamMember = async (teamId, data, addedBy) => {
+  await assertTeamRole(teamId, addedBy, ['OWNER', 'MANAGER']);
+
+  const existingMember = await teamsRepository.findTeamMember(
+    teamId,
+    data.userId
+  );
+
+  if (existingMember) {
+    throw new Error('USER_ALREADY_IN_TEAM');
+  }
+
+  return teamsRepository.createTeamMember({
+    teamId,
+    userId: data.userId,
+    role: data.role,
+    joinedAt: new Date(),
+    addedBy,
+  });
+};
+
+export const removeTeamMember = async (teamId, userId, removedBy) => {
+  await assertTeamRole(teamId, removedBy, ['OWNER']);
+
+  const member = await teamsRepository.findTeamMember(teamId, userId);
+
+  if (!member) {
+    throw new Error('MEMBER_NOT_FOUND');
+  }
+
+  if (member.role === 'OWNER') {
+    throw new Error('OWNER_CANNOT_BE_REMOVED');
+  }
+
+  await teamsRepository.deleteTeamMember(member.id);
+
+  return { removed: true, teamId, userId };
 };

@@ -61,6 +61,13 @@ export const getTeamMembersByUserId = async (userId) => {
   }));
 };
 
+export const deleteTeamMember = async (memberId) => {
+  await db
+    .collection(teamMembersCollectionName)
+    .doc(memberId)
+    .delete();
+};
+
 export const getTeamById = async (teamId) => {
   const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
   if (!teamDoc.exists) {

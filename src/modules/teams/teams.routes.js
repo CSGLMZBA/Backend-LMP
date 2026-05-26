@@ -16,6 +16,28 @@ router.get('/', teamsController.getMyTeams);
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
 router.get('/:teamId', teamsController.getTeam);
 
+router.post(
+  '/:teamId/join',
+  validate(teamsSchema.joinTeamSchema),
+  teamsController.joinTeam
+);
+
+router.get(
+  '/:teamId/members',
+  teamsController.getTeamMembers
+);
+
+router.post(
+  '/:teamId/members',
+  validate(teamsSchema.addTeamMemberSchema),
+  teamsController.addTeamMember
+);
+
+router.delete(
+  '/:teamId/members/:userId',
+  teamsController.removeTeamMember
+);
+
 router.use(authMiddleware(2));
 // POST /api/teams/create Create a new team
 router.post('/', validate(teamsSchema.create), teamsController.createTeam);
