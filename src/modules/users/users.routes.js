@@ -13,7 +13,7 @@ const router = Router();
 
 
 
-//router.use(authMiddleware);
+router.use(authMiddleware(3));
 router.get(
   '/',
   usersController.getUsers
