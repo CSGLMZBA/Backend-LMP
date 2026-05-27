@@ -21,7 +21,7 @@ router.get('/health', (req, res) => {
   });
 });
 
-router.use('/notifs', notificationsRoutes);
+router.use('/notifications', notificationsRoutes);
 // Add routes for registering and login in users
 router.use('/auth', authRoutes);
 
