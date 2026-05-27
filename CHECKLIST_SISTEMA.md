@@ -60,6 +60,7 @@ Contratos importantes ya alineados:
 - Registro publico no permite crear `admin`.
 - Un admin puede crear usuarios `admin`, `user` o `client` desde `POST /users`.
 - Rate limit basico en `POST /api/auth/register` y `POST /api/auth/login`.
+- Auditoria de auth/users para login, logout, create, update, delete, status_change y cambios sensibles.
 - Contrato de auth/usuarios/roles documentado en `docs/AUTH_USERS_ROLES.md`.
 - Endpoint `GET /api/permissions` para listar permisos disponibles.
 - Roles globales con seed:
@@ -278,6 +279,8 @@ Contratos importantes ya alineados:
 - Estructura modular clara.
 - CORS controlado por `CORS_ORIGIN`.
 - Headers basicos de seguridad con `helmet`.
+- `.env.example` con variables requeridas.
+- README con instalacion, variables, ejecucion local y seed de roles.
 - No se detectaron restos obvios de:
   - `teams.members`
   - `superadmin`
@@ -288,8 +291,6 @@ Contratos importantes ya alineados:
 - Tests reales.
 - Coleccion Postman/Insomnia.
 - Documentacion de API para frontend.
-- Setup inicial documentado.
-- Seed documentado.
 - Revision de indices Firestore para queries con `!=`.
 - Normalizar timestamps:
   - Actualmente hay mezcla de `new Date()` y `FieldValue.serverTimestamp()`.

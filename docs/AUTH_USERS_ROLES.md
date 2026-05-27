@@ -195,6 +195,32 @@ Errores esperados:
 - `USER_NOT_FOUND`
 - `USER_NOT_LOCKED`
 
+## Auditoria de Auth y Usuarios
+
+Las acciones principales de auth/users se registran en la coleccion `audit`.
+
+Campos base:
+
+- `action`
+- `entityType`
+- `entityId`
+- `userId`
+- `details`
+- `performedAt`
+
+Acciones registradas:
+
+- `create`: registro publico o creacion admin de usuario.
+- `login`: login exitoso.
+- `login_failed`: intento de login fallido.
+- `logout`: cierre de sesion.
+- `update`: actualizacion admin de usuario.
+- `delete`: soft delete de usuario.
+- `status_change`: cambio de status de usuario.
+- `sensitive_change`: cambio de password o desbloqueo de cuenta.
+
+No se registran passwords ni tokens en `details`.
+
 ## Endpoints Principales
 
 Auth:

@@ -5,6 +5,9 @@ const { FieldValue } = admin.firestore;
 
 const auditCollectionName = 'audit' // Easier to update later and to avoid typos
 const DEFAULT_AUDIT_FIELDS = {
+  action: "",
+  entityType: "",
+  entityId: "",
   userId: "",
   teamId: "",
   chartId: "",

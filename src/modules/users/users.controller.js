@@ -4,12 +4,25 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const postUser = async (req, res) => {
   try {
     const user = await usersService.postUser(
       req.validatedData
     );
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'user',
+      entityId: user.id,
+      userId: req.user.id,
+      details: {
+        source: 'admin_users',
+        createdRole: user.role,
+        email: user.email,
+      },
+    });
 
     return successResponse(
       res,
@@ -54,6 +67,18 @@ export const putUser = async (req, res) => {
     const user = await usersService.putUser(
       userId, req.validatedData
     );
+
+    await recordAudit({
+      action: 'update',
+      entityType: 'user',
+      entityId: userId,
+      userId: req.user.id,
+      details: {
+        fields: Object.keys(req.validatedData)
+          .filter((field) => field !== 'password'),
+        changedPassword: Boolean(req.validatedData.password),
+      },
+    });
 
     return successResponse(
       res,
@@ -120,6 +145,17 @@ try {
     const { userId } = req.params;
     
     const user = await usersService.update(userId, req.validatedData)
+
+    await recordAudit({
+      action: 'status_change',
+      entityType: 'user',
+      entityId: userId,
+      userId: req.user.id,
+      details: {
+        status: req.validatedData.status,
+      },
+    });
+
     return successResponse(
       res,
       'User status patched',
@@ -196,6 +232,16 @@ export const unlockUser = async (req, res) => {
 
     const user = await usersService.unlockUser(userId);
 
+    await recordAudit({
+      action: 'sensitive_change',
+      entityType: 'user',
+      entityId: userId,
+      userId: req.user.id,
+      details: {
+        change: 'unlock_user',
+      },
+    });
+
     return successResponse(
       res,
       'User unlocked successfully',
@@ -238,6 +284,16 @@ export const softDelete = async (req, res) => {
 
     const result = await usersService.softDelete(userId);
 
+    await recordAudit({
+      action: 'delete',
+      entityType: 'user',
+      entityId: userId,
+      userId: req.user.id,
+      details: {
+        softDelete: true,
+      },
+    });
+
     return successResponse(res, 'User erased', result);
   } catch (error) {
     if (error.message === 'USER_NOT_FOUND') {
@@ -276,6 +332,17 @@ export const update = async (req, res) => {
     const data = req.validatedData; 
 
     const usuario = await usersService.update(userId, data);
+
+    await recordAudit({
+      action: 'update',
+      entityType: 'user',
+      entityId: userId,
+      userId: req.user.id,
+      details: {
+        fields: Object.keys(data).filter((field) => field !== 'password'),
+        changedPassword: Boolean(data.password),
+      },
+    });
 
     return successResponse(
       res,

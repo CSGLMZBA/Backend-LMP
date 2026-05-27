@@ -4,22 +4,31 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const register = async (req, res) => {
   try {
     const user = await authService.register(
       req.validatedData
     );
-    const auditData = 
-    {
-      userId: user.id
-    };
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'user',
+      entityId: user.id,
+      userId: user.id,
+      details: {
+        source: 'self_register',
+        role: user.role,
+        email: user.email,
+      },
+    });
+
     return successResponse(
       res,
       'User Registered',
       user,
-      201,
-      auditData
+      201
     );
   } catch (error) {
     if (error.message === 'EMAIL_ALREADY_IN_USE') {
@@ -58,12 +67,32 @@ export const login = async (req, res) => {
       req.validatedData
     );
 
+    await recordAudit({
+      action: 'login',
+      entityType: 'user',
+      entityId: result.user.id,
+      userId: result.user.id,
+      details: {
+        email: result.user.email,
+        role: result.user.role,
+      },
+    });
+
     return successResponse(
       res,
       'Login successfull',
       result
     );
   } catch (error) {
+    await recordAudit({
+      action: 'login_failed',
+      entityType: 'user',
+      details: {
+        email: req.validatedData?.email,
+        reason: error.message,
+      },
+    });
+
     if (error.message === 'INVALID_CREDENTIALS') {
       return errorResponse(
         res,
@@ -145,6 +174,16 @@ export const updatePassword = async (req, res) => {
       req.validatedData
     );
 
+    await recordAudit({
+      action: 'sensitive_change',
+      entityType: 'user',
+      entityId: userId,
+      userId,
+      details: {
+        field: 'password',
+      },
+    });
+
     return successResponse(
       res,
       'Password Updated succcesfully',
@@ -177,6 +216,14 @@ export const logout = async (req, res) => {
     const result = await authService.logout(
       userId
     );
+
+    await recordAudit({
+      action: 'logout',
+      entityType: 'user',
+      entityId: userId,
+      userId,
+    });
+
     return successResponse(
       res,
       'Logged out succesfully',
