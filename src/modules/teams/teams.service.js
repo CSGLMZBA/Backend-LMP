@@ -1,43 +1,38 @@
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import * as teamsRepository from './teams.repository.js';
 import { env } from '../../config/env.js';
 
+const removeSensitiveFields = (team) => {
+  if (!team) return team;
+
+  const { password, ...safeTeam } = team;
+  return safeTeam;
+};
+
 export const createTeam = async (data, userId) => {
-  // Encrypt the password so we don't store plain passwords in the databased as specified in the document in the Teams channel
+  const now = new Date();
   const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
 
-  // Create team object with user Id (creatorId and hashed password
   const teamData = {
     name: data.name,
+    description: data.description || '',
     password: hashedPassword,
-    creatorId: userId,
-    createdAt: new Date(),
+    ownerId: userId,
+    status: 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
     members: [userId], // Add creator as first member
   };
 
-  // Save to database
   const newTeam = await teamsRepository.createTeam(teamData);
 
-  // Return without exposing the hashed password
-  return {
-    id: newTeam.id,
-    name: newTeam.name,
-    creatorId: newTeam.creatorId,
-    members: newTeam.members,
-    createdAt: newTeam.createdAt,
-  };
+  return removeSensitiveFields(newTeam);
 };
 
 export const getTeamsByUser = async (userId) => {
   const teams = await teamsRepository.getTeamsByUserId(userId);
   
-  return teams.map(team => ({
-    id: team.id,
-    name: team.name,
-    creatorId: team.creatorId,
-    members: team.members,
-    createdAt: team.createdAt,
-  }));
+  return teams.map(removeSensitiveFields);
 };
 
 export const getTeamById = async (teamId, userId) => {
@@ -46,16 +41,11 @@ export const getTeamById = async (teamId, userId) => {
     throw new Error('TEAM_NOT_FOUND');
   }
   
-  // Verify user is a member of the team so they can view it
-  if (!team.members.includes(userId)) {
+  const members = team.members || [];
+
+  if (!members.includes(userId)) {
     throw new Error('UNAUTHORIZED');
   }
   
-  return {
-    id: team.id,
-    name: team.name,
-    creatorId: team.creatorId,
-    members: team.members,
-    createdAt: team.createdAt,
-  };
+  return removeSensitiveFields(team);
 };

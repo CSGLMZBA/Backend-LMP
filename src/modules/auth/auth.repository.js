@@ -51,11 +51,11 @@ async findByEmailActive(email) {
     return null;
   }
 
-  return {
-    id: snapshot.docs[0].id,
-    ...snapshot.docs[0].data(),
-  };
-},
+    return {
+      id: snapshot.docs[0].id,
+      ...snapshot.docs[0].data(),
+    };
+  },
 
 async findByUserName (userName) {
   const snapshot = await db
@@ -83,25 +83,25 @@ async findByUserNameActive (userName) {
     .limit(1)
     .get();
 
-  if (snapshot.empty) {
-    return null;
-  }
+    if (snapshot.empty) {
+      return null;
+    }
 
-  return {
-    id: snapshot.docs[0].id,
-    ...snapshot.docs[0].data(),
-  };
-},
+    return {
+      id: snapshot.docs[0].id,
+      ...snapshot.docs[0].data(),
+    };
+  },
 
-async findById(id) {
-  const doc = await db.collection(usersCollectionName).doc(id).get();
+  async findById(id) {
+    const doc = await db.collection(usersCollectionName).doc(id).get();
 
-  if (!doc.exists) {
-    return null;
-  }
+    if (!doc.exists) {
+      return null;
+    }
 
-  return serializeDoc(doc);
-},
+    return serializeDoc(doc);
+  },
 
 async create(data) {
   const docRef = await db.collection(usersCollectionName).add({
@@ -111,19 +111,19 @@ async create(data) {
     updatedAt: FieldValue.serverTimestamp(),
   });
 
-  const created = await docRef.get();
+    const created = await docRef.get();
 
-  return serializeDoc(created);
-},
-async update(id, data) {
-  const docRef = db.collection(usersCollectionName).doc(id)
+    return serializeDoc(created);
+  },
+  async update(id, data) {
+    const docRef = db.collection(usersCollectionName).doc(id)
 
-  await docRef.update({
-    ...data,
-    updatedAt: FieldValue.serverTimestamp()
-  })
+    await docRef.update({
+      ...data,
+      updatedAt: FieldValue.serverTimestamp()
+    })
 
-  const updated = await docRef.get()
+    const updated = await docRef.get()
 
   return serializeDoc(updated)
 },
