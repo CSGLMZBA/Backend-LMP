@@ -2,19 +2,31 @@
 
 Documento para repartir trabajo entre el equipo sin pisarse.
 
+Actualizado tomando en cuenta la guia del proyecto final:
+
+- APIs comunes obligatorias.
+- Seguridad minima.
+- Proyecto 5: TaskFlow.
+- Entregables minimos.
+- Criterios de aceptacion.
+
+Nota: el profesor autorizo Express, asi que el uso de Express queda aceptado para este proyecto.
+
 ## Estado Actual
 
-- Rama revisada: `develop`
-- Estado del repositorio al revisar: limpio
-- Verificacion general: `app import ok`
+- Rama revisada: `develop`.
+- Verificacion general usada durante la revision: `app import ok`.
+- Backend principal: Node.js + Express + Firebase/Firestore.
+- Frontend esperado por guia: framework moderno con rutas protegidas.
 
 ## Panorama General
 
-Ya existen los modulos principales del backend:
+Ya existen estos modulos principales:
 
 - `auth`
 - `users`
 - `roles`
+- `permissions`
 - `teams`
 - `projects`
 - `charts`
@@ -34,6 +46,7 @@ Contratos importantes ya alineados:
   - `MEMBER`
   - `CLIENT`
 - `projects` dependen de `teamId`.
+- Decision tomada: `charts` y `tasks` tambien deben colgar de `projectId`.
 - `charts` dependen de `teamId`.
 - `stages` dependen de `chartId` y `teamId`.
 - `tasks` usan `teamId`, `chartId` y `stageId`.
@@ -42,7 +55,110 @@ Contratos importantes ya alineados:
 
 ---
 
-## Bloque 1: Auth, Usuarios y Roles
+## Criterios de la Guia
+
+### APIs Comunes Obligatorias
+
+Ya cubiertas:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `POST /api/auth/refresh`
+- `PATCH /api/auth/change-password`
+- `GET /api/users`
+- `GET /api/users/:id`
+- `POST /api/users`
+- `PUT /api/users/:id`
+- `PATCH /api/users/:id/status`
+- `DELETE /api/users/:id`
+- `GET /api/roles`
+- `POST /api/roles`
+- `PUT /api/roles/:id`
+- `DELETE /api/roles/:id`
+- `GET /api/permissions`
+- `GET /api/audit`
+- `GET /api/health`
+
+Falta:
+
+- `GET /api/dashboard/summary`
+
+### APIs Minimas de TaskFlow
+
+Ya cubiertas o parcialmente cubiertas:
+
+- `/api/projects` CRUD + status.
+- `/api/tasks` CRUD.
+- `/api/tasks/:id/status`.
+- `/api/tasks/:id/assign`.
+
+Falta:
+
+- `/api/tasks/:id/comments`
+- `/api/notifications`
+- `/api/notifications/read-all`
+- Dashboard de avance por proyecto.
+
+### Seguridad Minima
+
+Ya cubierto:
+
+- JWT access token con expiracion.
+- Refresh token.
+- Logout invalida sesion mediante `tokenVersion`.
+- Hash de passwords con bcrypt.
+- Middleware de autorizacion.
+- Roles globales.
+- Roles por equipo.
+- Validacion con schemas.
+- CORS controlado por `CORS_ORIGIN`.
+- Headers basicos con `helmet`.
+- Rate limit basico en login/registro.
+- Respuesta JSON estandar.
+- Auditoria base de auth/users.
+
+Falta o revisar:
+
+- Auditoria del resto de modulos importantes:
+  - teams
+  - projects
+  - charts
+  - stages
+  - tasks
+  - comments
+  - notifications
+- Sanitizacion explicita de inputs donde aplique.
+- Revision de errores para evitar mensajes genericos o inconsistentes.
+- Indices Firestore necesarios para queries con `!=`.
+
+### Entregables Minimos
+
+Ya cubierto o iniciado:
+
+- README con instalacion, variables, ejecucion local y seed.
+- `.env.example`.
+- Documento de auth/users/roles en `docs/AUTH_USERS_ROLES.md`.
+- Checklist general en este archivo.
+
+Falta:
+
+- Documento breve de arquitectura:
+  - modulos
+  - roles
+  - entidades
+  - endpoints
+- Coleccion Postman/Insomnia.
+- Evidencia de pruebas manuales.
+- Capturas o video corto de funcionamiento.
+- Usuario de prueba documentado.
+- Instrucciones claras de configuracion de base de datos/Firebase.
+- Documentacion de API para frontend por modulo.
+
+---
+
+## Bloque 1: Auth, Usuarios, Roles, Permissions y Audit Base
 
 ### Ya Tenemos
 
@@ -60,9 +176,17 @@ Contratos importantes ya alineados:
 - Registro publico no permite crear `admin`.
 - Un admin puede crear usuarios `admin`, `user` o `client` desde `POST /users`.
 - Rate limit basico en `POST /api/auth/register` y `POST /api/auth/login`.
-- Auditoria de auth/users para login, logout, create, update, delete, status_change y cambios sensibles.
+- Auditoria de auth/users para:
+  - login
+  - login_failed
+  - logout
+  - create
+  - update
+  - delete
+  - status_change
+  - sensitive_change
 - Contrato de auth/usuarios/roles documentado en `docs/AUTH_USERS_ROLES.md`.
-- Endpoint `GET /api/permissions` para listar permisos disponibles.
+- Endpoint `GET /api/permissions`.
 - Roles globales con seed:
   - `admin: 4`
   - `user: 2`
@@ -70,25 +194,20 @@ Contratos importantes ya alineados:
 
 ### Falta
 
-- Nada critico por ahora para cerrar este bloque.
+- No hay pendientes criticos para cerrar el Bloque 1 contra la guia.
+- Pendiente transversal:
+  - Probar manualmente todos los endpoints.
+  - Agregar los requests a Postman/Insomnia.
 
 ### Tareas Pequenas
 
 - Persona A:
-  - Documentar endpoints de `auth`.
-  - Documentar endpoints de `users`.
-  - Documentar endpoints de `roles`.
+  - Crear pruebas manuales de auth.
+  - Documentar usuario admin de prueba.
 - Persona B:
-  - Endurecer validaciones de `users.routes.js`.
-  - Validar parametros en rutas de usuarios.
+  - Crear requests Postman/Insomnia de auth/users/roles/permissions/audit.
 - Persona C:
-  - Probar flujo completo:
-    - Register.
-    - Login.
-    - Lockout.
-    - Unlock.
-    - Refresh.
-    - Logout.
+  - Revisar mensajes de error finales y consistencia de codigos.
 
 ---
 
@@ -113,7 +232,15 @@ Contratos importantes ya alineados:
 - Cambiar rol de miembro.
 - Validar parametros en rutas de equipos.
 - Evitar remover al ultimo `OWNER`.
-- Revisar si `CLIENT` puede crear equipo o si solo `user/admin`.
+- Definir si `CLIENT` puede crear equipo o solo `user/admin`.
+- Auditoria de acciones importantes:
+  - create team
+  - update team
+  - delete/archive team
+  - join team
+  - add member
+  - remove member
+  - change member role
 
 ### Tareas Pequenas
 
@@ -123,22 +250,21 @@ Contratos importantes ya alineados:
   - Validar permisos de `OWNER`/`MANAGER`.
 - Persona B:
   - Crear `PATCH /teams/:teamId/members/:userId/role`.
-  - Validar roles permitidos:
-    - `MANAGER`
-    - `MEMBER`
-    - `CLIENT`
+  - Validar roles permitidos.
   - Evitar modificaciones indebidas sobre `OWNER`.
 - Persona C:
   - Implementar regla de ultimo `OWNER`.
-  - Revisar permisos globales para crear equipos.
-  - Definir/implementar status de equipo:
-    - `ACTIVE`
-    - `INACTIVE`
-    - `ARCHIVED`
+  - Definir permisos globales para crear equipos.
+  - Agregar auditoria de equipos.
 
 ---
 
 ## Bloque 3: Proyectos
+
+### Decision Tomada
+
+- `charts` deben colgar de `projectId`.
+- `tasks` deben colgar de `projectId`.
 
 ### Ya Tenemos
 
@@ -151,12 +277,16 @@ Contratos importantes ya alineados:
 
 ### Falta Importante
 
-- Decidir si `charts` y `tasks` deben colgar de `projectId`.
-- Actualmente `projects` existen, pero `charts` y `tasks` no estan realmente amarrados a proyecto.
-- Faltan validaciones cruzadas:
+- Agregar `projectId` a `charts`.
+- Agregar `projectId` a `tasks`.
+- Validaciones cruzadas:
   - `project.teamId === chart.teamId`
   - `project.teamId === task.teamId`
   - `chart.teamId === task.teamId`
+  - `stage.chartId === task.chartId`
+- Dashboard/resumen por proyecto.
+- Auditoria de proyectos.
+- Filtros o busqueda basica de proyectos, si aplica en frontend.
 
 ### Tareas Pequenas
 
@@ -171,16 +301,17 @@ Contratos importantes ya alineados:
   - Validar que la tarea pertenezca a un proyecto valido.
 - Persona C:
   - Crear queries por proyecto:
-    - Charts por proyecto.
-    - Tasks por proyecto.
-  - Definir respuesta para detalle de proyecto:
-    - Proyecto solo.
-    - Proyecto con charts.
-    - Proyecto con resumen de tareas.
+    - charts por proyecto
+    - tasks por proyecto
+  - Definir detalle de proyecto:
+    - proyecto solo
+    - proyecto con charts
+    - proyecto con resumen de tareas
+  - Agregar auditoria de proyectos.
 
 ---
 
-## Bloque 4: Charts, Stages y Kanban
+## Bloque 4: Charts, Stages, Kanban y Dashboard
 
 ### Ya Tenemos
 
@@ -199,28 +330,38 @@ Contratos importantes ya alineados:
 - Orden de columnas/stages.
 - Evitar stages default duplicadas.
 - Validar mejor que cada stage pertenece al chart correcto.
+- Dashboard de avance por proyecto.
+- Endpoint obligatorio:
+  - `GET /api/dashboard/summary`
 - Definir si el frontend movera tareas por:
   - `/stages/tasks/move`
   - o update de task.
+- Auditoria de charts/stages.
 
 ### Tareas Pequenas
 
 - Persona A:
   - Crear `DELETE /charts/:chartId` como soft delete.
-  - Validar permisos por equipo.
+  - Validar permisos por equipo/proyecto.
   - Decidir que pasa con sus stages.
 - Persona B:
   - Agregar campo `order` en stages.
   - Crear endpoint para reordenar stages.
-  - Validar que no haya ordenes duplicados dentro del mismo chart.
+  - Validar orden unico dentro del chart.
 - Persona C:
-  - Blindar `createDefaultStages`.
-  - Evitar duplicar columnas default.
-  - Validar `chartId` + `teamId` en operaciones de stages.
+  - Crear modulo `dashboard`.
+  - Crear `GET /api/dashboard/summary`.
+  - Incluir resumen por proyecto:
+    - total tareas
+    - tareas por estado
+    - tareas por prioridad
+    - tareas completadas
+    - tareas bloqueadas
+  - Agregar auditoria donde aplique.
 
 ---
 
-## Bloque 5: Tasks
+## Bloque 5: Tasks, Comentarios y Notificaciones
 
 ### Ya Tenemos
 
@@ -238,40 +379,53 @@ Contratos importantes ya alineados:
   - `isBlocked`
   - `blockedReason`
 - Validacion de parametros en rutas.
+- Historial de status en `statusHistory`.
 
 ### Falta Critico
 
-- Si se cambia `stageId` desde `PUT /tasks/:id`, no queda claro que se sincronicen los arrays `stage.taskIds`.
+- Si se cambia `stageId` desde `PUT /tasks/:id`, debe sincronizarse con `stage.taskIds`.
 - Hay dos conceptos separados:
   - `task.status`: estado logico/reportes.
   - `task.stageId`: columna Kanban.
 - Falta documentar y hacer consistente ese flujo.
-- Falta validar que `chartId` y `stageId` pertenezcan al mismo equipo/chart.
-- Falta manejo real de subtareas:
-  - `parentTaskId`
-  - `subtaskIds`
+- Falta validar que `chartId`, `stageId`, `teamId` y `projectId` sean compatibles.
+- Falta manejo real de subtareas o decidir posponerlo.
+- Faltan comentarios, obligatorios para TaskFlow:
+  - `GET /api/tasks/:id/comments`
+  - `POST /api/tasks/:id/comments`
+  - `PUT/PATCH /api/tasks/:id/comments/:commentId` si aplica
+  - `DELETE /api/tasks/:id/comments/:commentId` si aplica
+- Faltan notificaciones, obligatorias para TaskFlow:
+  - `GET /api/notifications`
+  - `PATCH /api/notifications/read-all`
+- Falta auditoria de tareas/comentarios/notificaciones.
+- Faltan filtros suficientes para aceptacion:
+  - responsable
+  - prioridad
+  - estado
+  - proyecto
 
 ### Tareas Pequenas
 
 - Persona A:
   - Hacer que cambio de `stageId` use la misma logica que `moveTaskBetweenStages`.
   - Evitar que `PUT /tasks/:id` desincronice stages.
+  - Validar `projectId/chartId/stageId/teamId`.
 - Persona B:
-  - Validar `chartId/stageId/teamId` al crear tarea.
-  - Validar `chartId/stageId/teamId` al editar tarea.
-  - Evitar asignar tarea a una stage de otro chart/equipo.
+  - Crear modulo `comments`.
+  - Crear endpoints de comentarios por tarea.
+  - Validar que solo miembros del proyecto/equipo puedan comentar/ver.
+  - Auditar comentarios.
 - Persona C:
-  - Decidir si se implementan subtareas ahora.
-  - Si si:
-    - Crear endpoints de subtareas.
-    - Mantener `parentTaskId`.
-    - Mantener `subtaskIds`.
-  - Si no:
-    - Retirar o dejar documentados esos campos como futuros.
+  - Crear modulo `notifications`.
+  - Crear notificaciones al asignar tarea o cambiar estado.
+  - Crear `GET /api/notifications`.
+  - Crear `PATCH /api/notifications/read-all`.
+  - Auditar notificaciones si aplica.
 
 ---
 
-## Bloque 6: Calidad, Integracion y Entrega
+## Bloque 6: Calidad, Seguridad, Pruebas y Entrega
 
 ### Ya Tenemos
 
@@ -279,8 +433,10 @@ Contratos importantes ya alineados:
 - Estructura modular clara.
 - CORS controlado por `CORS_ORIGIN`.
 - Headers basicos de seguridad con `helmet`.
+- Rate limit en auth.
 - `.env.example` con variables requeridas.
 - README con instalacion, variables, ejecucion local y seed de roles.
+- Respuesta JSON estandar.
 - No se detectaron restos obvios de:
   - `teams.members`
   - `superadmin`
@@ -288,12 +444,21 @@ Contratos importantes ya alineados:
 
 ### Falta
 
-- Tests reales.
+- Tests reales o pruebas manuales documentadas.
 - Coleccion Postman/Insomnia.
-- Documentacion de API para frontend.
+- Documentacion de API para frontend por modulo.
+- Documento breve de arquitectura:
+  - modulos
+  - roles
+  - entidades
+  - endpoints
+- Usuario de prueba documentado.
+- Capturas o video corto de funcionamiento.
 - Revision de indices Firestore para queries con `!=`.
 - Normalizar timestamps:
-  - Actualmente hay mezcla de `new Date()` y `FieldValue.serverTimestamp()`.
+  - actualmente hay mezcla de `new Date()` y `FieldValue.serverTimestamp()`.
+- Revisar sanitizacion.
+- Revisar errores genericos en controladores.
 
 ### Tareas Pequenas
 
@@ -305,11 +470,48 @@ Contratos importantes ya alineados:
   - Crear coleccion Postman/Insomnia.
   - Probar flujo completo de usuario.
   - Probar flujo completo de equipo/proyecto/chart/stage/task.
+  - Documentar resultados de pruebas manuales.
 - Persona C:
+  - Crear documento de arquitectura.
   - Revisar timestamps.
-  - Unificar criterio.
   - Detectar indices necesarios de Firestore.
   - Mejorar errores consistentes.
+
+---
+
+## Bloque 7: Frontend Minimo Segun Guia
+
+Este bloque vive principalmente en el proyecto frontend, pero debe coordinarse con backend.
+
+### Paginas Minimas
+
+- Login.
+- Dashboard.
+- Proyectos.
+- Detalle de proyecto.
+- Tablero Kanban.
+- Tareas.
+- Notificaciones.
+- Perfil.
+
+### Requisitos Frontend
+
+- Manejar token.
+- Proteger rutas privadas.
+- Consumir API con fetch/axios/servicio HTTP.
+- Mostrar mensajes de error.
+- Validacion visual en formularios.
+- CRUD principal.
+- Navegacion consistente.
+- Interfaz responsiva.
+
+### Dependencias Backend para Frontend
+
+- `GET /api/dashboard/summary`.
+- `GET /api/notifications`.
+- `PATCH /api/notifications/read-all`.
+- Comentarios de tareas.
+- Filtros por responsable, prioridad y estado.
 
 ---
 
@@ -321,37 +523,51 @@ Para no pisarse:
   - `auth`
   - `users`
   - `roles`
+  - `permissions`
   - `audit`
+  - documentacion base
 - Persona 2:
   - `teams`
   - `projects`
+  - `dashboard`
 - Persona 3:
   - `charts`
   - `stages`
   - `tasks`
+  - `comments`
+  - `notifications`
 
-## Prioridad Recomendada
+## Prioridad Recomendada Actualizada
 
-1. Definir e implementar `projectId` en `charts` y `tasks`.
+1. Implementar `projectId` en `charts` y `tasks`.
 2. Corregir sincronizacion de `task.stageId` con `stage.taskIds`.
-3. Completar equipos:
-   - Update.
-   - Cambio de rol.
-   - Archive/delete.
-4. Completar charts/stages:
-   - Delete chart.
-   - Orden de stages.
-   - Evitar stages default duplicadas.
-5. Mantener actualizada la documentacion de contratos para frontend conforme avancen los siguientes bloques.
+3. Crear comentarios de tareas.
+4. Crear notificaciones.
+5. Crear `GET /api/dashboard/summary`.
+6. Completar equipos:
+   - update
+   - cambio de rol
+   - archive/delete
+7. Completar charts/stages:
+   - delete chart
+   - orden de stages
+   - evitar stages default duplicadas
+8. Preparar entregables:
+   - Postman/Insomnia
+   - pruebas manuales
+   - arquitectura
+   - capturas/video
 
 ## Nota Para el Equipo
 
-El punto mas delicado del sistema ya no son los roles globales, sino mantener consistentes estas relaciones:
+El punto mas delicado del sistema es mantener consistentes estas relaciones:
 
 - Usuario pertenece a equipo mediante `team_members`.
 - Proyecto pertenece a equipo.
-- Chart pertenece a equipo y, idealmente, a proyecto.
+- Chart pertenece a equipo y proyecto.
 - Stage pertenece a chart y equipo.
-- Task pertenece a equipo, chart, stage y, idealmente, proyecto.
+- Task pertenece a equipo, proyecto, chart y stage.
+- Comentario pertenece a task y usuario.
+- Notificacion pertenece a usuario y puede referenciar task/proyecto.
 
 Si cada cambio valida esas relaciones, el backend se mantiene estable y el frontend puede avanzar sin inventar reglas.
