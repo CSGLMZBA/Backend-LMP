@@ -7,7 +7,10 @@ import {
   updateTaskStatusSchema,
   assignUsersToTaskSchema,
   taskIdParamSchema,
-  getTasksQuerySchema
+  getTasksQuerySchema,
+  teamIdParamSchema,
+  teamStageParamsSchema,
+  teamPriorityParamsSchema,
 } from './task.schema.js';
 import * as tasksController from './task.controller.js';
 
@@ -18,7 +21,11 @@ router.use(authMiddleware(2));
 // ============ RUTAS PRINCIPALES ============
 
 // Obtener tareas del usuario
-router.get('/my-tasks', tasksController.getMyTasks);
+router.get(
+  '/my-tasks',
+  validate(getTasksQuerySchema, 'query'),
+  tasksController.getMyTasks
+);
 
 // Crear nueva tarea
 router.post(
@@ -28,22 +35,39 @@ router.post(
 );
 
 // Obtener tareas por equipo
-router.get('/team/:teamId', tasksController.getTasksByTeam);
+router.get(
+  '/team/:teamId',
+  validate(teamIdParamSchema, 'params'),
+  tasksController.getTasksByTeam
+);
 
 // Obtener tareas por etapa (para Kanban)
-router.get('/team/:teamId/stage/:stageId', tasksController.getTasksByStage);
+router.get(
+  '/team/:teamId/stage/:stageId',
+  validate(teamStageParamsSchema, 'params'),
+  tasksController.getTasksByStage
+);
 
 // Obtener tareas por prioridad
-router.get('/team/:teamId/priority/:priority', tasksController.getTasksByPriority);
+router.get(
+  '/team/:teamId/priority/:priority',
+  validate(teamPriorityParamsSchema, 'params'),
+  tasksController.getTasksByPriority
+);
 
 // ============ RUTAS CON ID DE TAREA ============
 
 // Obtener tarea por ID
-router.get('/:id', tasksController.getTaskById);
+router.get(
+  '/:id',
+  validate(taskIdParamSchema, 'params'),
+  tasksController.getTaskById
+);
 
 // Actualizar tarea
 router.put(
   '/:id',
+  validate(taskIdParamSchema, 'params'),
   validate(updateTaskSchema),
   tasksController.updateTask
 );
@@ -51,6 +75,7 @@ router.put(
 // Actualizar estado de tarea
 router.patch(
   '/:id/status',
+  validate(taskIdParamSchema, 'params'),
   validate(updateTaskStatusSchema),
   tasksController.updateTaskStatus
 );
@@ -58,11 +83,16 @@ router.patch(
 // Asignar usuarios a tarea
 router.post(
   '/:id/assign',
+  validate(taskIdParamSchema, 'params'),
   validate(assignUsersToTaskSchema),
   tasksController.assignUsersToTask
 );
 
 // Eliminar tarea (soft delete)
-router.delete('/:id', tasksController.deleteTask);
+router.delete(
+  '/:id',
+  validate(taskIdParamSchema, 'params'),
+  tasksController.deleteTask
+);
 
 export default router;

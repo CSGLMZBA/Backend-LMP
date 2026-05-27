@@ -99,6 +99,22 @@ export const taskIdParamSchema = z.object({
   id: z.string().min(1, 'Task ID is required'),
 });
 
+export const teamIdParamSchema = z.object({
+  teamId: z.string().min(1, 'Team ID is required'),
+});
+
+export const teamStageParamsSchema = z.object({
+  teamId: z.string().min(1, 'Team ID is required'),
+  stageId: z.string().min(1, 'Stage ID is required'),
+});
+
+export const teamPriorityParamsSchema = z.object({
+  teamId: z.string().min(1, 'Team ID is required'),
+  priority: z.string()
+    .transform((value) => parseInt(value, 10))
+    .pipe(z.number().int().min(1).max(4)),
+});
+
 // Esquema para operaciones batch (múltiples tareas)
 export const batchUpdateTasksSchema = z.object({
   taskIds: z.array(z.string()).min(1, 'At least one task ID is required'),
