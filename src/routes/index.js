@@ -7,6 +7,7 @@ import usersRoutes from '../modules/users/users.routes.js';
 import rolesRoutes from '../modules/roles/roles.routes.js';
 import stagesRoutes from '../modules/stages/stages.routes.js';
 import projectRoutes from '../modules/projects/projects.routes.js';
+import auditRoutes from '../modules/audit/audit.routes.js'
 
 const router = Router();
 
@@ -29,7 +30,7 @@ router.use('/users', usersRoutes);
 
 //Add routes for stages
 router.use('/stages', stagesRoutes);
-
+router.use('/audit', auditRoutes);
 router.use('/projects', projectRoutes);
 
 export default router;

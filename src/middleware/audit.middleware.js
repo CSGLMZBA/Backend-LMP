@@ -1,4 +1,4 @@
-import * as auditController from '../modules/audit/audit.controller'
+import * as auditController from '../modules/audit/audit.controller.js'
 export const LogFormat = 
 {
     userId: '',
@@ -12,5 +12,6 @@ export const LogFormat =
 
 export const LogAction = async (info) =>
 {
-    auditController.log(info)
+    const response = await auditController.log(info);
+    return response;
 };

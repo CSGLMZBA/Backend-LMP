@@ -10,12 +10,16 @@ export const register = async (req, res) => {
     const user = await authService.register(
       req.validatedData
     );
-
+    const auditData = 
+    {
+      userId: user.id
+    };
     return successResponse(
       res,
       'User Registered',
       user,
-      201
+      201,
+      auditData
     );
   } catch (error) {
     if (error.message === 'EMAIL_ALREADY_IN_USE') {

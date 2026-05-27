@@ -3,7 +3,6 @@ import { Router } from 'express';
 import * as auditController from './audit.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
-import { userSchema } from './audit.schema.js';
 
 
 

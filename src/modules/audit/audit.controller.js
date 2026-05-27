@@ -5,26 +5,24 @@ import {
   errorResponse,
 } from '../../utils/response.js';
 
-export const log = async (req, res) => {
+export const log = async (info) => {
   try {
     const audit = await auditService.register(
-      req
+      info
     );
 
-    return successResponse(
-      res,
-      'Action Logged',
-      audit,
-      201
-    );
+    return {
+      message: 'Action Logged',
+      info: audit,
+      code: 201
+    };
   } catch (error) {
-    return errorResponse(
-    res,
-    'Register error',
-    'INTERNAL_ERROR',
-    [error.message],
-    500
-  );
+    return {
+    error: 'Register error',
+    errorType: 'INTERNAL_ERROR',
+    errorMessage: [error.message],
+    errorCode: 500
+    };
   }
 };
 

@@ -10,6 +10,7 @@ const DEFAULT_AUDIT_FIELDS = {
   chartId: "",
   stageId: "",
   taskId: "",
+  details: "",
 
 };
 

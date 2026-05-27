@@ -9,13 +9,7 @@ import { env } from '../../config/env.js';
 export const register = async (data) => {
 
   const audit = await auditRepository.create({
-    userId: data.userId,
-    teamId: data.teamId,
-    chartId: data.chartId,
-    stageId: data.stageId,
-    taskId: data.taskId,
-    details: data.details,
-    performedAt: new Date(),
+    ...data
   });
 
   return audit;
