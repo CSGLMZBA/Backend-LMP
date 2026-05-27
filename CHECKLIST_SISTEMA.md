@@ -275,6 +275,8 @@ Contratos importantes ya alineados:
 
 - Backend importa correctamente.
 - Estructura modular clara.
+- CORS controlado por `CORS_ORIGIN`.
+- Headers basicos de seguridad con `helmet`.
 - No se detectaron restos obvios de:
   - `teams.members`
   - `superadmin`
