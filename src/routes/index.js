@@ -9,6 +9,7 @@ import stagesRoutes from '../modules/stages/stages.routes.js';
 import projectRoutes from '../modules/projects/projects.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js'
 import chartsRoutes from '../modules/charts/charts.routes.js';
+import permissionsRoutes from '../modules/permissions/permissions.routes.js';
 
 const router = Router();
 
@@ -25,6 +26,7 @@ router.use('/auth', authRoutes);
 // Add routes for creating and updating teams
 router.use('/teams', teamsRoutes);
 router.use('/roles', rolesRoutes);
+router.use('/permissions', permissionsRoutes);
 // Add routes for tasks
 router.use('/tasks', tasksRoutes);
 router.use('/users', usersRoutes);

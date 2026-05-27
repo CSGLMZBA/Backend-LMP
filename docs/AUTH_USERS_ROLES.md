@@ -189,6 +189,12 @@ Roles:
 - `PUT /roles/:roleId`
 - `DELETE /roles/:roleId`
 
+Permissions:
+
+- `GET /api/permissions`
+
+`GET /api/permissions` requiere token con nivel admin y devuelve la lista de permisos disponibles para configurar roles.
+
 ## Seed de Roles
 
 Script:

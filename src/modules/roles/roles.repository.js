@@ -11,7 +11,7 @@ const DEFAULT_ROLES_FIELDS = {
   permissions: [],
 };
 
-const PERMISSIONS = {
+export const PERMISSIONS = {
   ADD_ROLES: "roles.create",
   MODIFY_DATABASE: "database.write",
   CREATE_TEAMS: "teams.create",
