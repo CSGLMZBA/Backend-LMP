@@ -29,6 +29,26 @@ export const createChart = async (req, res) => {
       );
     }
 
+    if (error.message === 'PROJECT_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Project not found',
+        'PROJECT_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'PROJECT_TEAM_MISMATCH') {
+      return errorResponse(
+        res,
+        'Project does not belong to this team',
+        'PROJECT_TEAM_MISMATCH',
+        [],
+        400
+      );
+    }
+
     if (
       error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
       error.message === 'INSUFFICIENT_TEAM_ROLE'

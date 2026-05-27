@@ -1,13 +1,41 @@
 import * as chartsRepository from './charts.repository.js';
 import * as teamsService from '../teams/teams.service.js';
 import * as stagesService from '../stages/stages.service.js';
+import * as projectsRepository from '../projects/projects.repository.js';
+
+const mapChart = (chart) => ({
+  id: chart.id,
+  name: chart.name,
+  teamId: chart.teamId,
+  projectId: chart.projectId,
+  stageIds: chart.stageIds,
+  creatorId: chart.creatorId,
+  createdAt: chart.createdAt,
+  updatedAt: chart.updatedAt,
+});
+
+const assertProjectBelongsToTeam = async (projectId, teamId) => {
+  const project = await projectsRepository.getProjectById(projectId);
+
+  if (!project || project.status === 'DELETED') {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  if (project.teamId !== teamId) {
+    throw new Error('PROJECT_TEAM_MISMATCH');
+  }
+
+  return project;
+};
 
 export const createChart = async (data, userId) => {
+  await assertProjectBelongsToTeam(data.projectId, data.teamId);
   await teamsService.assertTeamRole(data.teamId, userId, ['OWNER', 'MANAGER']);
 
   const chartData = {
     name: data.name,
     teamId: data.teamId,
+    projectId: data.projectId,
     stageIds: data.stageIds,
     creatorId: userId,
   };
@@ -41,15 +69,7 @@ export const getChartsByUser = async (userId) => {
   );
   const charts = snapshots.flat();
   
-  return charts.map(chart => ({
-    id: chart.id,
-    name: chart.name,
-    teamId: chart.teamId,
-    stageIds: chart.stageIds,
-    creatorId: chart.creatorId,
-    createdAt: chart.createdAt,
-    updatedAt: chart.updatedAt,
-  }));
+  return charts.map(mapChart);
 };
 
 export const getChartById = async (chartId, userId) => {
@@ -68,15 +88,7 @@ export const getChartById = async (chartId, userId) => {
     throw error;
   }
   
-  return {
-    id: chart.id,
-    name: chart.name,
-    teamId: chart.teamId,
-    stageIds: chart.stageIds,
-    creatorId: chart.creatorId,
-    createdAt: chart.createdAt,
-    updatedAt: chart.updatedAt,
-  };
+  return mapChart(chart);
 };
 
 export const updateChart = async (chartId, data, userId) => {

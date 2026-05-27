@@ -37,6 +37,18 @@ export const getChartsByTeamId = async (teamId) => {
   }));
 };
 
+export const getChartsByProjectId = async (projectId) => {
+  const chartsSnapshot = await db
+    .collection(chartsCollectionName)
+    .where('projectId', '==', projectId)
+    .get();
+
+  return chartsSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
 export const updateChart = async (chartId, data) => {
   const docRef = db.collection(chartsCollectionName).doc(chartId);
 

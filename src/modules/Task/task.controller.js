@@ -1,6 +1,27 @@
 import * as tasksService from './task.service.js';
 import { successResponse, errorResponse, } from '../../utils/response.js';
 
+const relationErrorMessages = {
+  PROJECT_ID_REQUIRED: ['Project ID is required', 400],
+  PROJECT_NOT_FOUND: ['Project not found', 404],
+  PROJECT_TEAM_MISMATCH: ['Project does not belong to this team', 400],
+  CHART_NOT_FOUND: ['Chart not found', 404],
+  CHART_TEAM_MISMATCH: ['Chart does not belong to this team', 400],
+  CHART_PROJECT_MISMATCH: ['Chart does not belong to this project', 400],
+  STAGE_CHART_MISMATCH: ['Stage does not belong to this chart', 400],
+};
+
+const handleRelationError = (res, error) => {
+  const relationError = relationErrorMessages[error.message];
+
+  if (!relationError) {
+    return null;
+  }
+
+  const [message, status] = relationError;
+  return errorResponse(res, message, error.message, [], status);
+};
+
 // ============ CREAR TAREA ============
 export const createTask = async (req, res) => {
   try {
@@ -17,6 +38,9 @@ export const createTask = async (req, res) => {
       201
     );
   } catch (error) {
+    const relationError = handleRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'TASK_NAME_REQUIRED') {
       return errorResponse(
         res,
@@ -124,9 +148,9 @@ export const getTasksByStage = async (req, res) => {
 export const getMyTasks = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { teamId } = req.query; // Opcional: filtrar por equipo
+    const { teamId, projectId } = req.query; // Opcional: filtrar por equipo/proyecto
     
-    const tasks = await tasksService.getTasksByUser(userId, teamId);
+    const tasks = await tasksService.getTasksByUser(userId, teamId, projectId);
 
     return successResponse(
       res,
@@ -152,6 +176,9 @@ export const getTaskById = async (req, res) => {
       task
     );
   } catch (error) {
+    const relationError = handleRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'TASK_NOT_FOUND') {
       return errorResponse(
         res,
@@ -192,6 +219,9 @@ export const updateTask = async (req, res) => {
       updatedTask
     );
   } catch (error) {
+    const relationError = handleRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'TASK_NOT_FOUND') {
       return errorResponse(
         res,
@@ -208,6 +238,15 @@ export const updateTask = async (req, res) => {
         'UNAUTHORIZED_UPDATE',
         [],
         403
+      );
+    }
+    if (error.message === 'SOME_USERS_NOT_IN_TEAM') {
+      return errorResponse(
+        res,
+        'Some users are not members of the team',
+        'SOME_USERS_NOT_IN_TEAM',
+        [],
+        400
       );
     }
     return errorResponse(res, 'Error updating task');
@@ -252,6 +291,15 @@ export const updateTaskStatus = async (req, res) => {
         400
       );
     }
+    if (error.message === 'UNAUTHORIZED_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to update this task',
+        'UNAUTHORIZED_UPDATE',
+        [],
+        403
+      );
+    }
     return errorResponse(res, 'Error updating task status');
   }
 };
@@ -291,6 +339,15 @@ export const assignUsersToTask = async (req, res) => {
         'SOME_USERS_NOT_IN_TEAM',
         [],
         400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to assign this task',
+        'UNAUTHORIZED_UPDATE',
+        [],
+        403
       );
     }
     return errorResponse(res, 'Error assigning users to task');

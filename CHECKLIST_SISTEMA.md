@@ -46,10 +46,9 @@ Contratos importantes ya alineados:
   - `MEMBER`
   - `CLIENT`
 - `projects` dependen de `teamId`.
-- Decision tomada: `charts` y `tasks` tambien deben colgar de `projectId`.
-- `charts` dependen de `teamId`.
+- `charts` dependen de `teamId` y `projectId`.
 - `stages` dependen de `chartId` y `teamId`.
-- `tasks` usan `teamId`, `chartId` y `stageId`.
+- `tasks` usan `teamId`, `projectId`, `chartId` y `stageId`.
 - Login lockout y desbloqueo de usuarios ya existen.
 - Seed de roles globales ya existe.
 
@@ -270,44 +269,43 @@ Falta:
 
 - Crear proyecto por equipo.
 - Listar proyectos accesibles por equipos del usuario.
-- Ver proyecto.
+- Ver proyecto con charts y resumen de tareas.
 - Actualizar proyecto.
 - Cambiar status.
 - Soft delete.
-
-### Falta Importante
-
-- Agregar `projectId` a `charts`.
-- Agregar `projectId` a `tasks`.
+- `projectId` obligatorio al crear charts.
+- `projectId` obligatorio al crear tasks.
+- Queries internas:
+  - charts por proyecto.
+  - tasks por proyecto.
 - Validaciones cruzadas:
   - `project.teamId === chart.teamId`
   - `project.teamId === task.teamId`
   - `chart.teamId === task.teamId`
+  - `chart.projectId === task.projectId`
   - `stage.chartId === task.chartId`
-- Dashboard/resumen por proyecto.
+
+### Falta Importante
+
+- Endpoint global de dashboard/resumen:
+  - `GET /api/dashboard/summary`
 - Auditoria de proyectos.
 - Filtros o busqueda basica de proyectos, si aplica en frontend.
 
 ### Tareas Pequenas
 
 - Persona A:
-  - Agregar `projectId` a `charts`.
-  - Actualizar schema de chart.
-  - Validar que el proyecto exista.
-  - Validar que el proyecto pertenezca al mismo equipo.
+  - Crear auditoria de proyectos:
+    - create
+    - update
+    - status_change
+    - delete
 - Persona B:
-  - Agregar `projectId` a `tasks`.
-  - Actualizar schema de task.
-  - Validar que la tarea pertenezca a un proyecto valido.
+  - Definir filtros/busqueda de proyectos que necesitara el frontend.
+  - Implementar query params si hacen falta.
 - Persona C:
-  - Crear queries por proyecto:
-    - charts por proyecto
-    - tasks por proyecto
-  - Definir detalle de proyecto:
-    - proyecto solo
-    - proyecto con charts
-    - proyecto con resumen de tareas
-  - Agregar auditoria de proyectos.
+  - Crear `GET /api/dashboard/summary`.
+  - Decidir si el dashboard global vive solo en bloque 4 o se adelanta.
 
 ---
 
@@ -388,7 +386,6 @@ Falta:
   - `task.status`: estado logico/reportes.
   - `task.stageId`: columna Kanban.
 - Falta documentar y hacer consistente ese flujo.
-- Falta validar que `chartId`, `stageId`, `teamId` y `projectId` sean compatibles.
 - Falta manejo real de subtareas o decidir posponerlo.
 - Faltan comentarios, obligatorios para TaskFlow:
   - `GET /api/tasks/:id/comments`
@@ -410,7 +407,7 @@ Falta:
 - Persona A:
   - Hacer que cambio de `stageId` use la misma logica que `moveTaskBetweenStages`.
   - Evitar que `PUT /tasks/:id` desincronice stages.
-  - Validar `projectId/chartId/stageId/teamId`.
+  - Mantener las validaciones cruzadas cuando se corrija la sincronizacion.
 - Persona B:
   - Crear modulo `comments`.
   - Crear endpoints de comentarios por tarea.
@@ -539,20 +536,19 @@ Para no pisarse:
 
 ## Prioridad Recomendada Actualizada
 
-1. Implementar `projectId` en `charts` y `tasks`.
-2. Corregir sincronizacion de `task.stageId` con `stage.taskIds`.
-3. Crear comentarios de tareas.
-4. Crear notificaciones.
-5. Crear `GET /api/dashboard/summary`.
-6. Completar equipos:
+1. Corregir sincronizacion de `task.stageId` con `stage.taskIds`.
+2. Crear comentarios de tareas.
+3. Crear notificaciones.
+4. Crear `GET /api/dashboard/summary`.
+5. Completar equipos:
    - update
    - cambio de rol
    - archive/delete
-7. Completar charts/stages:
+6. Completar charts/stages:
    - delete chart
    - orden de stages
    - evitar stages default duplicadas
-8. Preparar entregables:
+7. Preparar entregables:
    - Postman/Insomnia
    - pruebas manuales
    - arquitectura

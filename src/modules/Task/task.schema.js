@@ -5,6 +5,7 @@ export const createTaskSchema = z.object({
   // Campos obligatorios
   name: z.string().min(1, 'Task name is required').max(200, 'Task name must be less than 200 characters'),
   teamId: z.string().min(1, 'Team ID is required'),
+  projectId: z.string().min(1, 'Project ID is required'),
   
   // Campos opcionales con valores por defecto
   chartId: z.string().optional().nullable(),
@@ -46,6 +47,7 @@ export const createTaskSchema = z.object({
 // actualizar una tarea
 export const updateTaskSchema = z.object({
   name: z.string().min(1, 'Task name is required').max(200, 'Task name must be less than 200 characters').optional(),
+  projectId: z.string().min(1, 'Project ID is required').optional(),
   chartId: z.string().optional().nullable(),
   stageId: z.string().optional().nullable(),
   description: z.string().max(5000, 'Description must be less than 5000 characters').optional(),
@@ -83,6 +85,7 @@ export const assignUsersToTaskSchema = z.object({
 // filtrar tareas
 export const getTasksQuerySchema = z.object({
   teamId: z.string().optional(),
+  projectId: z.string().optional(),
   stageId: z.string().optional(),
   priority: z.string().transform(val => parseInt(val)).pipe(z.number().int().min(1).max(4)).optional(),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED', 'CANCELLED']).optional(),

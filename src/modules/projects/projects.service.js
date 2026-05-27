@@ -1,5 +1,32 @@
 import * as repository from './projects.repository.js';
 import * as teamsService from '../teams/teams.service.js';
+import * as chartsRepository from '../charts/charts.repository.js';
+import * as tasksRepository from '../Task/task.repository.js';
+
+const buildTaskSummary = (tasks) => tasks.reduce((summary, task) => {
+  const status = task.status || 'UNKNOWN';
+  const priority = String(task.priority || 'UNKNOWN');
+
+  summary.total += 1;
+  summary.byStatus[status] = (summary.byStatus[status] || 0) + 1;
+  summary.byPriority[priority] = (summary.byPriority[priority] || 0) + 1;
+
+  if (task.status === 'COMPLETED') {
+    summary.completed += 1;
+  }
+
+  if (task.isBlocked) {
+    summary.blocked += 1;
+  }
+
+  return summary;
+}, {
+  total: 0,
+  completed: 0,
+  blocked: 0,
+  byStatus: {},
+  byPriority: {},
+});
 
 export const createProject = async (data, userId) => {
   await teamsService.assertTeamRole(data.teamId, userId, ['OWNER', 'MANAGER']);
@@ -33,7 +60,16 @@ export const getProjectById = async (id, userId) => {
 
   await teamsService.assertTeamMembership(project.teamId, userId);
 
-  return project;
+  const [charts, tasks] = await Promise.all([
+    chartsRepository.getChartsByProjectId(project.id),
+    tasksRepository.getTasksByProjectId(project.id),
+  ]);
+
+  return {
+    ...project,
+    charts,
+    taskSummary: buildTaskSummary(tasks),
+  };
 };
 
 export const updateProject = async (id, data, userId) => {

@@ -1,5 +1,83 @@
 import * as tasksRepository from './task.repository.js';
+import * as projectsRepository from '../projects/projects.repository.js';
+import * as chartsRepository from '../charts/charts.repository.js';
 import { stagesRepository } from '../stages/stages.repository.js';
+
+const sortByPriority = (tasks) => [...tasks].sort((a, b) => b.priority - a.priority);
+
+const mapTaskListItem = (task) => ({
+  id: task.id,
+  name: task.name,
+  teamId: task.teamId,
+  projectId: task.projectId,
+  chartId: task.chartId,
+  stageId: task.stageId,
+  description: task.description,
+  assignedUserIds: task.assignedUserIds,
+  priority: task.priority,
+  status: task.status,
+  startDate: task.startDate,
+  dueDate: task.dueDate,
+  createdBy: task.createdBy,
+  createdAt: task.createdAt,
+  completedAt: task.completedAt,
+  tags: task.tags
+});
+
+const assertTaskRelations = async ({ teamId, projectId, chartId, stageId }) => {
+  if (!projectId) {
+    throw new Error('PROJECT_ID_REQUIRED');
+  }
+
+  const project = await projectsRepository.getProjectById(projectId);
+
+  if (!project || project.status === 'DELETED') {
+    throw new Error('PROJECT_NOT_FOUND');
+  }
+
+  if (project.teamId !== teamId) {
+    throw new Error('PROJECT_TEAM_MISMATCH');
+  }
+
+  let resolvedChartId = chartId || null;
+  let resolvedStageId = stageId || null;
+
+  if (resolvedStageId) {
+    const stage = await stagesRepository.findById(resolvedStageId);
+
+    if (!stage || stage.teamId !== teamId) {
+      throw new Error('STAGE_NOT_FOUND');
+    }
+
+    if (resolvedChartId && stage.chartId !== resolvedChartId) {
+      throw new Error('STAGE_CHART_MISMATCH');
+    }
+
+    resolvedChartId = stage.chartId;
+  }
+
+  if (resolvedChartId) {
+    const chart = await chartsRepository.getChartById(resolvedChartId);
+
+    if (!chart) {
+      throw new Error('CHART_NOT_FOUND');
+    }
+
+    if (chart.teamId !== teamId) {
+      throw new Error('CHART_TEAM_MISMATCH');
+    }
+
+    if (chart.projectId !== projectId) {
+      throw new Error('CHART_PROJECT_MISMATCH');
+    }
+  }
+
+  return {
+    projectId,
+    chartId: resolvedChartId,
+    stageId: resolvedStageId,
+  };
+};
 
 export const createTask = async (data, userId) => {
   if (!data.name || data.name.trim() === '') {
@@ -30,19 +108,19 @@ export const createTask = async (data, userId) => {
     }
   }
 
-  if (data.stageId) {
-    const stage = await stagesRepository.findById(data.stageId);
-
-    if (!stage || stage.teamId !== data.teamId) {
-      throw new Error('STAGE_NOT_FOUND');
-    }
-  }
+  const relations = await assertTaskRelations({
+    teamId: data.teamId,
+    projectId: data.projectId,
+    chartId: data.chartId,
+    stageId: data.stageId,
+  });
   
   const taskData = {
     name: data.name.trim(),
     teamId: data.teamId,
-    chartId: data.chartId || null,
-    stageId: data.stageId || null,
+    projectId: relations.projectId,
+    chartId: relations.chartId,
+    stageId: relations.stageId,
     description: data.description || '',
     assignedUserIds: data.assignedUserIds || [],
     priority: data.priority || 2,
@@ -52,8 +130,8 @@ export const createTask = async (data, userId) => {
     dueDate: data.dueDate || null,
     completedAt: null,
     status: 'PENDING',
-    isBlocked: false,
-    blockedReason: null,
+    isBlocked: data.isBlocked || false,
+    blockedReason: data.blockedReason || null,
     timeEstimate: data.timeEstimate || null,
     timeSpent: 0,
     parentTaskId: data.parentTaskId || null,
@@ -71,27 +149,11 @@ export const createTask = async (data, userId) => {
   
   const newTask = await tasksRepository.createTask(taskData);
 
-  // Si se proporcionó un stageId, registrar la tarea en ese stage
   if (taskData.stageId) {
     await stagesRepository.addTask(taskData.stageId, newTask.id);
   }
 
-  return {
-    id: newTask.id,
-    name: newTask.name,
-    teamId: newTask.teamId,
-    chartId: newTask.chartId,
-    stageId: newTask.stageId,
-    description: newTask.description,
-    assignedUserIds: newTask.assignedUserIds,
-    priority: newTask.priority,
-    status: newTask.status,
-    startDate: newTask.startDate,
-    dueDate: newTask.dueDate,
-    createdBy: newTask.createdBy,
-    createdAt: newTask.createdAt,
-    tags: newTask.tags
-  };
+  return mapTaskListItem(newTask);
 };
 
 export const getTasksByTeam = async (teamId, userId) => {
@@ -101,25 +163,7 @@ export const getTasksByTeam = async (teamId, userId) => {
   }
   
   const tasks = await tasksRepository.getTasksByTeamId(teamId);
-  const sortedTasks = [...tasks].sort((a, b) => b.priority - a.priority);
-  
-  return sortedTasks.map(task => ({
-    id: task.id,
-    name: task.name,
-    teamId: task.teamId,
-    chartId: task.chartId,
-    stageId: task.stageId,
-    description: task.description,
-    assignedUserIds: task.assignedUserIds,
-    priority: task.priority,
-    status: task.status,
-    startDate: task.startDate,
-    dueDate: task.dueDate,
-    createdBy: task.createdBy,
-    createdAt: task.createdAt,
-    completedAt: task.completedAt,
-    tags: task.tags
-  }));
+  return sortByPriority(tasks).map(mapTaskListItem);
 };
 
 export const getTasksByStage = async (teamId, stageId, userId) => {
@@ -129,11 +173,13 @@ export const getTasksByStage = async (teamId, stageId, userId) => {
   }
   
   const tasks = await tasksRepository.getTasksByStageId(teamId, stageId);
-  const sortedTasks = [...tasks].sort((a, b) => b.priority - a.priority);
-  
-  return sortedTasks.map(task => ({
+  return sortByPriority(tasks).map(task => ({
     id: task.id,
     name: task.name,
+    teamId: task.teamId,
+    projectId: task.projectId,
+    chartId: task.chartId,
+    stageId: task.stageId,
     assignedUserIds: task.assignedUserIds,
     priority: task.priority,
     status: task.status,
@@ -141,21 +187,23 @@ export const getTasksByStage = async (teamId, stageId, userId) => {
   }));
 };
 
-export const getTasksByUser = async (userId, teamId = null) => {
+export const getTasksByUser = async (userId, teamId = null, projectId = null) => {
   let tasks;
   
-  if (teamId) {
+  if (projectId) {
+    tasks = await tasksRepository.getTasksByUserAndProject(userId, projectId);
+  } else if (teamId) {
     tasks = await tasksRepository.getTasksByUserAndTeam(userId, teamId);
   } else {
     tasks = await tasksRepository.getTasksByUserId(userId);
   }
   
-  const sortedTasks = [...tasks].sort((a, b) => b.priority - a.priority);
-  
-  return sortedTasks.map(task => ({
+  return sortByPriority(tasks).map(task => ({
     id: task.id,
     name: task.name,
     teamId: task.teamId,
+    projectId: task.projectId,
+    chartId: task.chartId,
     stageId: task.stageId,
     description: task.description,
     priority: task.priority,
@@ -180,6 +228,7 @@ export const getTaskById = async (taskId, userId) => {
     id: task.id,
     name: task.name,
     teamId: task.teamId,
+    projectId: task.projectId,
     chartId: task.chartId,
     stageId: task.stageId,
     description: task.description,
@@ -208,12 +257,33 @@ export const updateTask = async (taskId, updateData, userId) => {
   
   const userBelongsToTeam = await tasksRepository.verifyUserInTeam(task.teamId, userId);
   if (!userBelongsToTeam) throw new Error('UNAUTHORIZED_UPDATE');
+
+  if (updateData.assignedUserIds !== undefined) {
+    const usersValid = await tasksRepository.verifyUsersInTeam(
+      task.teamId,
+      updateData.assignedUserIds
+    );
+
+    if (!usersValid) {
+      throw new Error('SOME_USERS_NOT_IN_TEAM');
+    }
+  }
+
+  const relations = await assertTaskRelations({
+    teamId: task.teamId,
+    projectId: updateData.projectId !== undefined ? updateData.projectId : task.projectId,
+    chartId: updateData.chartId !== undefined ? updateData.chartId : task.chartId,
+    stageId: updateData.stageId !== undefined ? updateData.stageId : task.stageId,
+  });
   
-  const updatedData = {};
+  const updatedData = {
+    projectId: relations.projectId,
+    chartId: relations.chartId,
+    stageId: relations.stageId,
+  };
+
   if (updateData.name) updatedData.name = updateData.name.trim();
   if (updateData.description !== undefined) updatedData.description = updateData.description;
-  if (updateData.stageId !== undefined) updatedData.stageId = updateData.stageId;
-  if (updateData.chartId !== undefined) updatedData.chartId = updateData.chartId;
   if (updateData.assignedUserIds !== undefined) updatedData.assignedUserIds = updateData.assignedUserIds;
   if (updateData.priority !== undefined) updatedData.priority = updateData.priority;
   if (updateData.startDate !== undefined) updatedData.startDate = updateData.startDate;
@@ -233,6 +303,9 @@ export const updateTask = async (taskId, updateData, userId) => {
   return {
     id: updatedTask.id,
     name: updatedTask.name,
+    teamId: updatedTask.teamId,
+    projectId: updatedTask.projectId,
+    chartId: updatedTask.chartId,
     stageId: updatedTask.stageId,
     assignedUserIds: updatedTask.assignedUserIds,
     priority: updatedTask.priority,
@@ -244,6 +317,9 @@ export const updateTask = async (taskId, updateData, userId) => {
 export const updateTaskStatus = async (taskId, newStatus, userId, comment = '') => {
   const task = await tasksRepository.getTaskById(taskId);
   if (!task) throw new Error('TASK_NOT_FOUND');
+
+  const userBelongsToTeam = await tasksRepository.verifyUserInTeam(task.teamId, userId);
+  if (!userBelongsToTeam) throw new Error('UNAUTHORIZED_UPDATE');
   
   const validTransitions = {
     'PENDING': ['IN_PROGRESS', 'CANCELLED'],
@@ -288,6 +364,9 @@ export const updateTaskStatus = async (taskId, newStatus, userId, comment = '') 
 export const assignUsersToTask = async (taskId, userIds, assignedBy) => {
   const task = await tasksRepository.getTaskById(taskId);
   if (!task) throw new Error('TASK_NOT_FOUND');
+
+  const userBelongsToTeam = await tasksRepository.verifyUserInTeam(task.teamId, assignedBy);
+  if (!userBelongsToTeam) throw new Error('UNAUTHORIZED_UPDATE');
   
   const usersValid = await tasksRepository.verifyUsersInTeam(task.teamId, userIds);
   if (!usersValid) throw new Error('SOME_USERS_NOT_IN_TEAM');
@@ -313,12 +392,12 @@ export const getTasksByPriority = async (teamId, priority, userId) => {
   }
 
   const tasks = await tasksRepository.getTasksByPriority(teamId, priority);
-  const sortedTasks = [...tasks].sort((a, b) => b.priority - a.priority);
-
-  return sortedTasks.map(task => ({
+  return sortByPriority(tasks).map(task => ({
     id: task.id,
     name: task.name,
     teamId: task.teamId,
+    projectId: task.projectId,
+    chartId: task.chartId,
     stageId: task.stageId,
     assignedUserIds: task.assignedUserIds,
     priority: task.priority,

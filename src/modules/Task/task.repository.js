@@ -30,6 +30,19 @@ export const getTasksByTeamId = async (teamId) => {
   }));
 };
 
+export const getTasksByProjectId = async (projectId) => {
+  const tasksSnapshot = await db
+    .collection(tasksCollectionName)
+    .where('projectId', '==', projectId)
+    .where('isDeleted', '!=', true)
+    .get();
+  
+  return tasksSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
 export const getTasksByStageId = async (teamId, stageId) => {
   const tasksSnapshot = await db
     .collection(tasksCollectionName)
@@ -61,6 +74,20 @@ export const getTasksByUserAndTeam = async (userId, teamId) => {
   const tasksSnapshot = await db
     .collection(tasksCollectionName)
     .where('teamId', '==', teamId)
+    .where('assignedUserIds', 'array-contains', userId)
+    .where('isDeleted', '!=', true)
+    .get();
+  
+  return tasksSnapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+};
+
+export const getTasksByUserAndProject = async (userId, projectId) => {
+  const tasksSnapshot = await db
+    .collection(tasksCollectionName)
+    .where('projectId', '==', projectId)
     .where('assignedUserIds', 'array-contains', userId)
     .where('isDeleted', '!=', true)
     .get();
