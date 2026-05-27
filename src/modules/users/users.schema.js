@@ -1,11 +1,13 @@
 import { z } from 'zod';
 
+const globalRoleSchema = z.enum(['admin', 'user', 'client']);
+
 export const usersSchema = {
   post: z.object({
     displayName: z.string().min(3),
     userName: z.string().min(3),
     email: z.string().email(),
-    role: z.string().optional(),
+    role: globalRoleSchema.optional(),
     status: z.string().optional(),
     password: z.string().min(6),
     active: z.boolean().optional(),
@@ -26,7 +28,7 @@ export const usersSchema = {
     displayName: z.string().min(2),
     userName: z.string().min(3),
     email: z.string().email(),
-    role: z.string().min(3),
+    role: globalRoleSchema,
     status: z.string(),
     password: z.string().min(6),
     active: z.boolean(),

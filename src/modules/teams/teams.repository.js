@@ -61,22 +61,17 @@ export const getTeamMembersByUserId = async (userId) => {
   }));
 };
 
+export const deleteTeamMember = async (memberId) => {
+  await db
+    .collection(teamMembersCollectionName)
+    .doc(memberId)
+    .delete();
+};
+
 export const getTeamById = async (teamId) => {
   const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
   if (!teamDoc.exists) {
     return null;
   }
   return { id: teamDoc.id, ...teamDoc.data() };
-};
-
-export const getTeamsByUserId = async (userId) => {
-  const teamsSnapshot = await db
-    .collection(teamsCollectionName)
-    .where('members', 'array-contains', userId) // Check that we are a member
-    .get();
-  
-  return teamsSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
 };

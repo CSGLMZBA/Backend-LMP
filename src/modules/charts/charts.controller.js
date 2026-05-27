@@ -19,6 +19,29 @@ export const createChart = async (req, res) => {
       201
     );
   } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to create charts for this team',
+        error.message,
+        [],
+        403
+      );
+    }
+
     return errorResponse(res, 'Error creating chart');
   }
 };
@@ -42,7 +65,7 @@ export const getChart = async (req, res) => {
   try {
     const userId = req.user.id;
     const { chartId } = req.params;
-    const chart = await teamsService.getChartById(chartId, userId);
+    const chart = await chartsService.getChartById(chartId, userId);
 
     return successResponse(
       res,
@@ -72,3 +95,45 @@ export const getChart = async (req, res) => {
   }
 };
 
+export const updateChart = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chartId } = req.params;
+    const chart = await chartsService.updateChart(
+      chartId,
+      req.validatedData,
+      userId
+    );
+
+    return successResponse(
+      res,
+      'Chart updated successfully',
+      chart
+    );
+  } catch (error) {
+    if (error.message === 'CHART_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Chart not found',
+        'CHART_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to update this chart',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error updating chart');
+  }
+};

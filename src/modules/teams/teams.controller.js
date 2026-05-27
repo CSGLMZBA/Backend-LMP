@@ -72,5 +72,218 @@ export const getTeam = async (req, res) => {
   }
 };
 
-// TO DO: add functions for updating the teams and deleting them (full delete or logical only?) and create the logic to the other files 
-// verification and such for the service etc etc.
+export const joinTeam = async (req, res) => {
+  try {
+    const member = await teamsService.joinTeam(
+      req.params.teamId,
+      req.user.id,
+      req.validatedData.password
+    );
+
+    return successResponse(
+      res,
+      'Team joined successfully',
+      member,
+      201
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'TEAM_NOT_ACTIVE') {
+      return errorResponse(
+        res,
+        'Team is not active',
+        'TEAM_NOT_ACTIVE',
+        [],
+        400
+      );
+    }
+
+    if (error.message === 'USER_ALREADY_IN_TEAM') {
+      return errorResponse(
+        res,
+        'User already belongs to this team',
+        'USER_ALREADY_IN_TEAM',
+        [],
+        400
+      );
+    }
+
+    if (error.message === 'INVALID_TEAM_PASSWORD') {
+      return errorResponse(
+        res,
+        'Invalid team password',
+        'INVALID_TEAM_PASSWORD',
+        [],
+        401
+      );
+    }
+
+    return errorResponse(res, 'Error joining team');
+  }
+};
+
+export const getTeamMembers = async (req, res) => {
+  try {
+    const members = await teamsService.getTeamMembers(
+      req.params.teamId,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team members retrieved',
+      members
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to view this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error retrieving team members');
+  }
+};
+
+export const addTeamMember = async (req, res) => {
+  try {
+    const member = await teamsService.addTeamMember(
+      req.params.teamId,
+      req.validatedData,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team member added',
+      member,
+      201
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to modify this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+
+    if (error.message === 'INSUFFICIENT_TEAM_ROLE') {
+      return errorResponse(
+        res,
+        'Insufficient team role',
+        'INSUFFICIENT_TEAM_ROLE',
+        [],
+        403
+      );
+    }
+
+    if (error.message === 'USER_ALREADY_IN_TEAM') {
+      return errorResponse(
+        res,
+        'User already belongs to this team',
+        'USER_ALREADY_IN_TEAM',
+        [],
+        400
+      );
+    }
+
+    return errorResponse(res, 'Error adding team member');
+  }
+};
+
+export const removeTeamMember = async (req, res) => {
+  try {
+    const result = await teamsService.removeTeamMember(
+      req.params.teamId,
+      req.params.userId,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team member removed',
+      result
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'MEMBER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Member not found',
+        'MEMBER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'OWNER_CANNOT_BE_REMOVED') {
+      return errorResponse(
+        res,
+        'Owner cannot be removed',
+        'OWNER_CANNOT_BE_REMOVED',
+        [],
+        400
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to modify this team',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error removing team member');
+  }
+};

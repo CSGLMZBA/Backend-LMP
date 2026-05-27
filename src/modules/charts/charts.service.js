@@ -1,35 +1,54 @@
-import bcrypt from 'bcryptjs';
 import * as chartsRepository from './charts.repository.js';
-import * as teamsRepository from '../teams/teams.repository.js';
-import { env } from '../../config/env.js';
+import * as teamsService from '../teams/teams.service.js';
+import * as stagesService from '../stages/stages.service.js';
 
 export const createChart = async (data, userId) => {
-  // Encrypt the password so we don't store plain passwords in the databased as specified in the document in the Teams channel
+  await teamsService.assertTeamRole(data.teamId, userId, ['OWNER', 'MANAGER']);
 
   const chartData = {
     name: data.name,
     teamId: data.teamId,
-    stageIds: data.stages,
+    stageIds: data.stageIds,
     creatorId: userId,
-    createdAt: new Date(),
   };
 
-  // Save to database
   const newChart = await chartsRepository.createChart(chartData);
 
-  return newChart;
+  if (newChart.stageIds.length > 0) {
+    return { ...newChart, stages: [] };
+  }
+
+  const stages = await stagesService.createDefaultStages(
+    newChart.id,
+    newChart.teamId,
+    userId
+  );
+  const stageIds = stages.map((stage) => stage.id);
+  const updatedChart = await chartsRepository.updateChart(newChart.id, {
+    stageIds,
+  });
+
+  return {
+    ...updatedChart,
+    stages,
+  };
 };
 
 export const getChartsByUser = async (userId) => {
-  const charts = await chartsRepository.getChartsByUserId(userId);
+  const teams = await teamsService.getTeamsByUser(userId);
+  const snapshots = await Promise.all(
+    teams.map((team) => chartsRepository.getChartsByTeamId(team.id))
+  );
+  const charts = snapshots.flat();
   
   return charts.map(chart => ({
     id: chart.id,
     name: chart.name,
     teamId: chart.teamId,
-    stageIds: chart.stages,
+    stageIds: chart.stageIds,
     creatorId: chart.creatorId,
     createdAt: chart.createdAt,
+    updatedAt: chart.updatedAt,
   }));
 };
 
@@ -38,21 +57,39 @@ export const getChartById = async (chartId, userId) => {
   if (!chart) {
     throw new Error('CHART_NOT_FOUND');
   }
-  const team = await teamsRepository.getTeamById(chart.teamId);
-  if (!team) {
-    throw new Error('CHART_HAS_NO_TEAM');
-  }
-  // Verify user is a member of the team so they can view it
-  if (!team.members.includes(userId)) {
-    throw new Error('UNAUTHORIZED');
+
+  try {
+    await teamsService.assertTeamMembership(chart.teamId, userId);
+  } catch (error) {
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      throw new Error('UNAUTHORIZED');
+    }
+
+    throw error;
   }
   
   return {
     id: chart.id,
     name: chart.name,
     teamId: chart.teamId,
-    stageIds: chart.stages,
+    stageIds: chart.stageIds,
     creatorId: chart.creatorId,
-    createdAt: chart.createdAt
+    createdAt: chart.createdAt,
+    updatedAt: chart.updatedAt,
   };
+};
+
+export const updateChart = async (chartId, data, userId) => {
+  const chart = await chartsRepository.getChartById(chartId);
+
+  if (!chart) {
+    throw new Error('CHART_NOT_FOUND');
+  }
+
+  await teamsService.assertTeamRole(chart.teamId, userId, [
+    'OWNER',
+    'MANAGER',
+  ]);
+
+  return chartsRepository.updateChart(chartId, data);
 };

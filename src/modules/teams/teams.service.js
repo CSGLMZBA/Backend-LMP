@@ -9,6 +9,36 @@ const removeSensitiveFields = (team) => {
   return safeTeam;
 };
 
+export const getTeamMembership = async (teamId, userId) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team) {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  return teamsRepository.findTeamMember(teamId, userId);
+};
+
+export const assertTeamMembership = async (teamId, userId) => {
+  const membership = await getTeamMembership(teamId, userId);
+
+  if (!membership) {
+    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
+  }
+
+  return membership;
+};
+
+export const assertTeamRole = async (teamId, userId, allowedRoles) => {
+  const membership = await assertTeamMembership(teamId, userId);
+
+  if (!allowedRoles.includes(membership.role)) {
+    throw new Error('INSUFFICIENT_TEAM_ROLE');
+  }
+
+  return membership;
+};
+
 export const createTeam = async (data, userId) => {
   const now = new Date();
   const hashedPassword = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
@@ -21,18 +51,36 @@ export const createTeam = async (data, userId) => {
     status: 'ACTIVE',
     createdAt: now,
     updatedAt: now,
-    members: [userId], // Add creator as first member
   };
 
   const newTeam = await teamsRepository.createTeam(teamData);
+
+  await teamsRepository.createTeamMember({
+    teamId: newTeam.id,
+    userId,
+    role: 'OWNER',
+    joinedAt: now,
+  });
 
   return removeSensitiveFields(newTeam);
 };
 
 export const getTeamsByUser = async (userId) => {
-  const teams = await teamsRepository.getTeamsByUserId(userId);
+  const memberships = await teamsRepository.getTeamMembersByUserId(userId);
+  const teamsByMembership = await Promise.all(
+    memberships.map((membership) =>
+      teamsRepository.getTeamById(membership.teamId)
+    )
+  );
+  const teamsById = new Map();
   
-  return teams.map(removeSensitiveFields);
+  teamsByMembership
+    .filter(Boolean)
+    .forEach((team) => {
+      teamsById.set(team.id, team);
+    });
+
+  return [...teamsById.values()].map(removeSensitiveFields);
 };
 
 export const getTeamById = async (teamId, userId) => {
@@ -41,11 +89,87 @@ export const getTeamById = async (teamId, userId) => {
     throw new Error('TEAM_NOT_FOUND');
   }
   
-  const members = team.members || [];
+  const membership = await getTeamMembership(teamId, userId);
 
-  if (!members.includes(userId)) {
+  if (!membership) {
     throw new Error('UNAUTHORIZED');
   }
   
   return removeSensitiveFields(team);
+};
+
+export const joinTeam = async (teamId, userId, password) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team) {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  if (team.status !== 'ACTIVE') {
+    throw new Error('TEAM_NOT_ACTIVE');
+  }
+
+  const existingMember = await teamsRepository.findTeamMember(teamId, userId);
+
+  if (existingMember) {
+    throw new Error('USER_ALREADY_IN_TEAM');
+  }
+
+  const validPassword = await bcrypt.compare(password, team.password);
+
+  if (!validPassword) {
+    throw new Error('INVALID_TEAM_PASSWORD');
+  }
+
+  return teamsRepository.createTeamMember({
+    teamId,
+    userId,
+    role: 'MEMBER',
+    joinedAt: new Date(),
+  });
+};
+
+export const getTeamMembers = async (teamId, userId) => {
+  await assertTeamMembership(teamId, userId);
+
+  return teamsRepository.getTeamMembersByTeamId(teamId);
+};
+
+export const addTeamMember = async (teamId, data, addedBy) => {
+  await assertTeamRole(teamId, addedBy, ['OWNER', 'MANAGER']);
+
+  const existingMember = await teamsRepository.findTeamMember(
+    teamId,
+    data.userId
+  );
+
+  if (existingMember) {
+    throw new Error('USER_ALREADY_IN_TEAM');
+  }
+
+  return teamsRepository.createTeamMember({
+    teamId,
+    userId: data.userId,
+    role: data.role,
+    joinedAt: new Date(),
+    addedBy,
+  });
+};
+
+export const removeTeamMember = async (teamId, userId, removedBy) => {
+  await assertTeamRole(teamId, removedBy, ['OWNER']);
+
+  const member = await teamsRepository.findTeamMember(teamId, userId);
+
+  if (!member) {
+    throw new Error('MEMBER_NOT_FOUND');
+  }
+
+  if (member.role === 'OWNER') {
+    throw new Error('OWNER_CANNOT_BE_REMOVED');
+  }
+
+  await teamsRepository.deleteTeamMember(member.id);
+
+  return { removed: true, teamId, userId };
 };

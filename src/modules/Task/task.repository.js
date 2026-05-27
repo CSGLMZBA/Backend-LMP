@@ -1,6 +1,7 @@
 import { db } from '../../config/firebase.js';
 
 const tasksCollectionName = 'tasks';
+const teamMembersCollectionName = 'team_members';
 
 export const createTask = async (taskData) => {
   const tasksRef = db.collection(tasksCollectionName);
@@ -103,27 +104,32 @@ export const softDeleteTask = async (taskId) => {
 
 // Verificaciones
 export const verifyUserInTeam = async (teamId, userId) => {
-  const teamDoc = await db.collection('teams').doc(teamId).get();
-  if (!teamDoc.exists) return false;
-  
-  const teamData = teamDoc.data();
-  const members = teamData.members || [];
-  return members.includes(userId);
+  const snapshot = await db
+    .collection(teamMembersCollectionName)
+    .where('teamId', '==', teamId)
+    .where('userId', '==', userId)
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
 };
 
 export const verifyUsersInTeam = async (teamId, userIds) => {
-  const teamDoc = await db.collection('teams').doc(teamId).get();
-  if (!teamDoc.exists) return false;
-  
-  const teamData = teamDoc.data();
-  const members = teamData.members || [];
-  return userIds.every(userId => members.includes(userId));
+  const checks = await Promise.all(
+    userIds.map((userId) => verifyUserInTeam(teamId, userId))
+  );
+
+  return checks.every(Boolean);
 };
 
 export const isUserAdminInTeam = async (teamId, userId) => {
-  const teamDoc = await db.collection('teams').doc(teamId).get();
-  if (!teamDoc.exists) return false;
-  
-  const teamData = teamDoc.data();
-  return teamData.creatorId === userId;
+  const snapshot = await db
+    .collection(teamMembersCollectionName)
+    .where('teamId', '==', teamId)
+    .where('userId', '==', userId)
+    .where('role', '==', 'OWNER')
+    .limit(1)
+    .get();
+
+  return !snapshot.empty;
 };

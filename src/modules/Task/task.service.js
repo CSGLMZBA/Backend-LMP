@@ -9,6 +9,34 @@ export const createTask = async (data, userId) => {
   if (!data.teamId) {
     throw new Error('TEAM_ID_REQUIRED');
   }
+
+  const userBelongsToTeam = await tasksRepository.verifyUserInTeam(
+    data.teamId,
+    userId
+  );
+
+  if (!userBelongsToTeam) {
+    throw new Error('UNAUTHORIZED_TEAM_ACCESS');
+  }
+
+  if (data.assignedUserIds?.length) {
+    const usersValid = await tasksRepository.verifyUsersInTeam(
+      data.teamId,
+      data.assignedUserIds
+    );
+
+    if (!usersValid) {
+      throw new Error('SOME_USERS_NOT_IN_TEAM');
+    }
+  }
+
+  if (data.stageId) {
+    const stage = await stagesRepository.findById(data.stageId);
+
+    if (!stage || stage.teamId !== data.teamId) {
+      throw new Error('STAGE_NOT_FOUND');
+    }
+  }
   
   const taskData = {
     name: data.name.trim(),

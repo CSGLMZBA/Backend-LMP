@@ -32,6 +32,16 @@ export const register = async (req, res) => {
       );
     }
 
+    if (error.message === 'USERNAME_ALREADY_IN_USE') {
+      return errorResponse(
+        res,
+        'Theres already a user with that username',
+        'USERNAME_ALREADY_IN_USE',
+        [],
+        400
+      );
+    }
+
     return errorResponse(
     res,
     'Register error',
@@ -61,6 +71,16 @@ export const login = async (req, res) => {
         'INVALID_CREDENTIALS',
         [],
         401
+      );
+    }
+
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
       );
     }
 

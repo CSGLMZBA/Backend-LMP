@@ -35,6 +35,33 @@ export const createTask = async (req, res) => {
         400
       );
     }
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to create tasks for this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+    if (error.message === 'SOME_USERS_NOT_IN_TEAM') {
+      return errorResponse(
+        res,
+        'Some users are not members of the team',
+        'SOME_USERS_NOT_IN_TEAM',
+        [],
+        400
+      );
+    }
+    if (error.message === 'STAGE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Stage not found for this team',
+        'STAGE_NOT_FOUND',
+        [],
+        404
+      );
+    }
     return errorResponse(res, 'Error creating task');
   }
 };

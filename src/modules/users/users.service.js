@@ -38,7 +38,7 @@ export const postUser = async (data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    role: 'client',
+    role: data.role || 'user',
     active: true,
     createdAt: new Date(),
   });
@@ -62,7 +62,7 @@ export const putUser = async (userId, data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    role: 'client',
+    role: data.role,
     active: true,
     createdAt: new Date(),
   });
