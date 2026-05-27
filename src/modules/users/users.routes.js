@@ -4,14 +4,10 @@ import * as usersController from './users.controller.js';
 import { authMiddleware } from '../../middleware/auth.middleware.js';
 import { validate } from '../../middleware/validate.middleware.js';
 import { usersSchema } from './users.schema.js';
-import { userSchema } from '../auth/auth.schema.js';
 
 
 
 const router = Router();
-// We leave these routes unprotected since this product is supposed to work as an open platform
-
-
 
 router.use(authMiddleware(3));
 router.get(

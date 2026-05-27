@@ -40,7 +40,7 @@ export const register = async (data) => {
     userName: data.userName,
     email: data.email,
     passwordHash: hashedPassword,
-    role: 'user',
+    role: data.role || 'user',
     status: "offline",
     active: true,
     createdAt: new Date(),

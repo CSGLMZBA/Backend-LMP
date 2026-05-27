@@ -18,11 +18,21 @@ export const postUser = async (req, res) => {
       201
     );
   } catch (error) {
-    if (error.message === 'EMAIL_ALREADY_EXISTS') {
+    if (error.message === 'EMAIL_ALREADY_IN_USE') {
       return errorResponse(
         res,
         'Theres already a user with that email',
-        'EMAIL_ALREADY_EXISTS',
+        'EMAIL_ALREADY_IN_USE',
+        [],
+        400
+      );
+    }
+
+    if (error.message === 'USERNAME_ALREADY_IN_USE') {
+      return errorResponse(
+        res,
+        'Theres already a user with that username',
+        'USERNAME_ALREADY_IN_USE',
         [],
         400
       );
@@ -52,6 +62,15 @@ export const putUser = async (req, res) => {
       201
     );
   } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
 
     return errorResponse(
     res,
@@ -77,6 +96,14 @@ export const getUsers = async (req, res) =>
   }
   catch (error) 
   {
+    if (error.message === 'USER_DATABASE_EMPTY') {
+      return successResponse(
+        res,
+        'Users retrieved',
+        []
+      );
+    }
+
     return errorResponse(
       res,
       'Error gettin users',
@@ -106,6 +133,24 @@ try {
         'USER_NOT_FOUND',
         [],
         404
+      );
+    }
+    if (error.message === 'USERNAME_ALREADY_EXISTS') {
+      return errorResponse(
+        res,
+        'Theres already a user with that username',
+        'USERNAME_ALREADY_EXISTS',
+        [],
+        400
+      );
+    }
+    if (error.message === 'EMAIL_ALREADY_IN_USE') {
+      return errorResponse(
+        res,
+        'Theres already a user with that email',
+        'EMAIL_ALREADY_IN_USE',
+        [],
+        400
       );
     }
     return errorResponse(res, 'Error patching user status');
@@ -195,6 +240,26 @@ export const softDelete = async (req, res) => {
 
     return successResponse(res, 'User erased', result);
   } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'USER_ALREADY_DELETED') {
+      return errorResponse(
+        res,
+        'User already deleted',
+        'USER_ALREADY_DELETED',
+        [],
+        400
+      );
+    }
+
     return errorResponse(
       res,
       'Error deleting',
@@ -218,11 +283,21 @@ export const update = async (req, res) => {
       usuario
     );
   } catch (error) {
-    if (error.message === 'EMAIL_ALREADY_EXISTS') {
+    if (error.message === 'EMAIL_ALREADY_IN_USE') {
       return errorResponse(
         res,
         'Theres already a user with that email',
-        'EMAIL_ALREADY_EXISTS',
+        'EMAIL_ALREADY_IN_USE',
+        [],
+        400
+      );
+    }
+
+    if (error.message === 'USERNAME_ALREADY_EXISTS') {
+      return errorResponse(
+        res,
+        'Theres already a user with that username',
+        'USERNAME_ALREADY_EXISTS',
         [],
         400
       );

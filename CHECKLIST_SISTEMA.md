@@ -55,6 +55,11 @@ Contratos importantes ya alineados:
 - Bloqueo por 5 intentos fallidos de login.
 - Desbloqueo administrativo de usuarios.
 - CRUD/admin basico de usuarios.
+- Registro publico con default `user`.
+- Registro publico permite elegir `client`.
+- Registro publico no permite crear `admin`.
+- Un admin puede crear usuarios `admin`, `user` o `client` desde `POST /users`.
+- Contrato de auth/usuarios/roles documentado en `docs/AUTH_USERS_ROLES.md`.
 - Roles globales con seed:
   - `admin: 4`
   - `user: 2`
@@ -62,10 +67,7 @@ Contratos importantes ya alineados:
 
 ### Falta
 
-- Definir si `client` puede registrarse solo o si lo crea un admin.
-- Mejorar manejo de errores en controladores de `users`.
-- Revisar si `users` debe permitir crear usuarios con `role` libre desde API admin.
-- Documentar contrato de roles para frontend.
+- Nada critico por ahora para cerrar este bloque.
 
 ### Tareas Pequenas
 
@@ -335,7 +337,7 @@ Para no pisarse:
    - Delete chart.
    - Orden de stages.
    - Evitar stages default duplicadas.
-5. Documentar contrato para frontend.
+5. Mantener actualizada la documentacion de contratos para frontend conforme avancen los siguientes bloques.
 
 ## Nota Para el Equipo
 

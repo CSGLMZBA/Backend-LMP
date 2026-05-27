@@ -95,7 +95,7 @@ export const update = async(id, payload) => {
     const user = await usersRepository.findById(id);
 
     if (!user) {
-      throw createError('User not found', 404, 'USER_NOT_FOUND')
+      throw new Error('USER_NOT_FOUND')
     }
     
     const data = { ...payload }
@@ -104,14 +104,14 @@ export const update = async(id, payload) => {
       const exists = await usersRepository.findByUserNameActive(payload.userName)
 
       if (exists) {
-        throw createError('UserName already exists', 409, 'USERNAME_ALREADY_EXISTS')
+        throw new Error('USERNAME_ALREADY_EXISTS')
       }
     }
     if (payload.email && payload.email !== user.email) {
       const exists = await usersRepository.findByEmailActive(payload.email)
 
       if (exists) {
-        throw createError('Email already in use', 409, 'EMAIL_ALREADY_IN_USE')
+        throw new Error('EMAIL_ALREADY_IN_USE')
       }
     }
 
@@ -145,11 +145,11 @@ export const softDelete = async (userId) => {
   const user = await usersRepository.findById(userId);
 
   if (!user) {
-    throw createError('User not found', 404, 'USER_NOT_FOUND');
+    throw new Error('USER_NOT_FOUND');
   }
 
   if (user.active === false) {
-    throw createError('User already deleted', 400, 'USER_ALREADY_DELETED');
+    throw new Error('USER_ALREADY_DELETED');
   }
 
   const updated = await usersRepository.softDelete(userId);
