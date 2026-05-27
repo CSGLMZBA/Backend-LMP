@@ -13,7 +13,9 @@ const DEFAULT_USER_FIELDS = {
   active: true,
   tokenVersion: 0,
   passwordHash: null,
-  lastOnline: null
+  lastOnline: null,
+  loginAttempts: 0,
+  isLocked: false,
 };
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -140,6 +142,19 @@ async softDelete(id) {
     active: false,
     updatedAt: FieldValue.serverTimestamp(),
     deletedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return serializeDoc(updated);
+},
+async unlockUser(id) {
+  const docRef = db.collection(usersCollectionName).doc(id);
+
+  await docRef.update({
+    isLocked: false,
+    loginAttempts: 0,
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   const updated = await docRef.get();

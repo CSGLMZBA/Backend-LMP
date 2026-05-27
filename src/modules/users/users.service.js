@@ -125,6 +125,22 @@ export const update = async(id, payload) => {
     return removeSensitiveFields(updated)
 };
 
+export const unlockUser = async (userId) => {
+  const user = await usersRepository.findById(userId);
+
+  if (!user) {
+    throw new Error('USER_NOT_FOUND');
+  }
+
+  if (!user.isLocked) {
+    throw new Error('USER_NOT_LOCKED');
+  }
+
+  const updated = await usersRepository.unlockUser(userId);
+
+  return removeSensitiveFields(updated);
+};
+
 export const softDelete = async (userId) => {
   const user = await usersRepository.findById(userId);
 

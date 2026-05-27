@@ -145,6 +145,47 @@ try {
   }
 };
 
+export const unlockUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const user = await usersService.unlockUser(userId);
+
+    return successResponse(
+      res,
+      'User unlocked successfully',
+      user
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'USER_NOT_LOCKED') {
+      return errorResponse(
+        res,
+        'User is not locked',
+        'USER_NOT_LOCKED',
+        [],
+        400
+      );
+    }
+
+    return errorResponse(
+      res,
+      'Error unlocking user',
+      'UNLOCK_USER_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
 
 export const softDelete = async (req, res) => {
   try {

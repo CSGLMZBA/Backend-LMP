@@ -41,6 +41,11 @@ router.patch(
     usersController.patchStatus
   );
 
+router.patch(
+  '/:userId/unlock',
+  validate(usersSchema.getParams, 'params'),
+  usersController.unlockUser
+);
   
 router.delete(
   '/:userId',
