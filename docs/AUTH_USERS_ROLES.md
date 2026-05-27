@@ -137,6 +137,40 @@ Reglas:
   - `loginAttempts: 0`
   - `isLocked: false`
 
+## Rate Limit de Auth
+
+Los endpoints publicos de auth tienen rate limit por IP y ruta:
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+
+Variables:
+
+- `AUTH_RATE_LIMIT_WINDOW_MS`
+- `AUTH_RATE_LIMIT_MAX_REQUESTS`
+
+Defaults:
+
+- `AUTH_RATE_LIMIT_WINDOW_MS=900000`
+- `AUTH_RATE_LIMIT_MAX_REQUESTS=20`
+
+Cuando se excede el limite, el backend responde:
+
+```json
+{
+  "success": false,
+  "message": "Too many requests, please try again later",
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "details": [
+      {
+        "retryAfterSeconds": 60
+      }
+    ]
+  }
+}
+```
+
 ## Desbloqueo de Usuarios
 
 Endpoint:

@@ -5,6 +5,12 @@ dotenv.config();
 export const env = {
   PORT: process.env.PORT || 3000,
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  AUTH_RATE_LIMIT_WINDOW_MS: parseInt(
+    process.env.AUTH_RATE_LIMIT_WINDOW_MS || 15 * 60 * 1000
+  ),
+  AUTH_RATE_LIMIT_MAX_REQUESTS: parseInt(
+    process.env.AUTH_RATE_LIMIT_MAX_REQUESTS || 20
+  ),
 
   JWT_ACCESS_SECRET: process.env.JWT_ACCESS_SECRET,
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m', // Added so the program actually uses the specified time in the env file, if its not there just default to 15m

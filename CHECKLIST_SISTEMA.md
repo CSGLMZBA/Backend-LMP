@@ -59,6 +59,7 @@ Contratos importantes ya alineados:
 - Registro publico permite elegir `client`.
 - Registro publico no permite crear `admin`.
 - Un admin puede crear usuarios `admin`, `user` o `client` desde `POST /users`.
+- Rate limit basico en `POST /api/auth/register` y `POST /api/auth/login`.
 - Contrato de auth/usuarios/roles documentado en `docs/AUTH_USERS_ROLES.md`.
 - Endpoint `GET /api/permissions` para listar permisos disponibles.
 - Roles globales con seed:
