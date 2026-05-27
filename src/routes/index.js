@@ -10,6 +10,7 @@ import projectRoutes from '../modules/projects/projects.routes.js';
 import auditRoutes from '../modules/audit/audit.routes.js'
 import chartsRoutes from '../modules/charts/charts.routes.js';
 import permissionsRoutes from '../modules/permissions/permissions.routes.js';
+import notificationsRoutes from '../modules/notifications/notifications.routes.js';
 
 const router = Router();
 
@@ -20,6 +21,7 @@ router.get('/health', (req, res) => {
   });
 });
 
+router.use('/notifs', notificationsRoutes);
 // Add routes for registering and login in users
 router.use('/auth', authRoutes);
 

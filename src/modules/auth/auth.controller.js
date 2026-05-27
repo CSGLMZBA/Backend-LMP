@@ -6,6 +6,8 @@ import {
 } from '../../utils/response.js';
 import { recordAudit } from '../../middleware/audit.middleware.js';
 
+import * as notificationsController from '../notifications/notifications.controller.js'
+
 export const register = async (req, res) => {
   try {
     const user = await authService.register(
@@ -24,6 +26,13 @@ export const register = async (req, res) => {
       },
     });
 
+    const notifData = 
+    {
+      title: "profile Created",
+      body: `${user.userName} was created at ${user.createdAt}`,
+      type: 2,
+    }
+    console.log(await notificationsController.createNotificationMass(notifData,[user.id]));
     return successResponse(
       res,
       'User Registered',
