@@ -1,6 +1,7 @@
 import { stagesRepository } from './stages.repository.js';
 import * as teamsService from '../teams/teams.service.js';
 import * as tasksRepository from '../Task/task.repository.js';
+import * as chartsRepository from '../charts/charts.repository.js';
 
 // Helper para remover campos sensibles (si los hubiera)
 const removeSensitiveFields = (stage) => {
@@ -45,6 +46,16 @@ export const createStage = async (data, userId) => {
   }
   
   await assertStageTeamAccess(data.teamId, userId);
+
+  const chart = await chartsRepository.getChartById(data.chartId);
+
+  if (!chart) {
+    throw new Error('CHART_NOT_FOUND');
+  }
+
+  if (chart.teamId !== data.teamId) {
+    throw new Error('CHART_TEAM_MISMATCH');
+  }
   
   // Crear objeto de etapa
   const stageData = {
@@ -61,6 +72,7 @@ export const createStage = async (data, userId) => {
   
   // Guardar en base de datos
   const newStage = await stagesRepository.create(stageData);
+  await chartsRepository.addStageToChart(data.chartId, newStage.id);
   
   return removeSensitiveFields({
     id: newStage.id,
@@ -312,7 +324,8 @@ export const deleteStage = async (stageId, userId) => {
   }
   
   // Soft delete (borrado lógico)
-  const deleted = await stagesRepository.softDelete(stageId);
+  await stagesRepository.softDelete(stageId);
+  await chartsRepository.removeStageFromChart(stage.chartId, stageId);
   
   return { deleted: true, stageId: stageId };
 };

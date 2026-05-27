@@ -49,3 +49,29 @@ export const updateChart = async (chartId, data) => {
 
   return { id: updated.id, ...updated.data() };
 };
+
+export const addStageToChart = async (chartId, stageId) => {
+  const docRef = db.collection(chartsCollectionName).doc(chartId);
+
+  await docRef.update({
+    stageIds: FieldValue.arrayUnion(stageId),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return { id: updated.id, ...updated.data() };
+};
+
+export const removeStageFromChart = async (chartId, stageId) => {
+  const docRef = db.collection(chartsCollectionName).doc(chartId);
+
+  await docRef.update({
+    stageIds: FieldValue.arrayRemove(stageId),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return { id: updated.id, ...updated.data() };
+};

@@ -47,6 +47,24 @@ export const createStage = async (req, res) => {
         400
       );
     }
+    if (error.message === 'CHART_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Chart not found',
+        'CHART_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'CHART_TEAM_MISMATCH') {
+      return errorResponse(
+        res,
+        'Chart does not belong to this team',
+        'CHART_TEAM_MISMATCH',
+        [],
+        400
+      );
+    }
     if (error.message === 'TEAM_NOT_FOUND') {
       return errorResponse(
         res,
@@ -479,6 +497,24 @@ export const createDefaultStages = async (req, res) => {
         'UNAUTHORIZED_TEAM_ACCESS',
         [],
         403
+      );
+    }
+    if (error.message === 'CHART_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Chart not found',
+        'CHART_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'CHART_TEAM_MISMATCH') {
+      return errorResponse(
+        res,
+        'Chart does not belong to this team',
+        'CHART_TEAM_MISMATCH',
+        [],
+        400
       );
     }
     return errorResponse(
