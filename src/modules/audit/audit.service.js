@@ -1,10 +1,4 @@
-import bcrypt from 'bcrypt'
 import { auditRepository } from './audit.repository.js';
-
-import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
-
-import { env } from '../../config/env.js';
-
 
 export const register = async (data) => {
 
@@ -19,7 +13,7 @@ export const register = async (data) => {
 export const get = async () => {
 
   const audit = await auditRepository.get();
-  if(audit == [])
+  if (audit.length === 0)
   {
     throw new Error("DATABASE_EMPTY");
   }
