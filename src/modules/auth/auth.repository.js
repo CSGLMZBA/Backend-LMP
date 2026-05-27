@@ -13,7 +13,9 @@ const DEFAULT_USER_FIELDS = {
   active: true,
   tokenVersion: 0,
   passwordHash: null,
-  lastOnline: null
+  lastOnline: null,
+  loginAttempts: 0,
+  isLocked: false,
 };
 
 const serializeDoc = (doc) => ({
@@ -139,6 +141,43 @@ async login(id) {
   const updated = await docRef.get()
 
   return serializeDoc(updated)
+},
+async incrementLoginAttempts(id) {
+  const docRef = db.collection(usersCollectionName).doc(id);
+
+  await docRef.update({
+    loginAttempts: FieldValue.increment(1),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return serializeDoc(updated);
+},
+async lockUser(id) {
+  const docRef = db.collection(usersCollectionName).doc(id);
+
+  await docRef.update({
+    isLocked: true,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return serializeDoc(updated);
+},
+async resetLoginAttempts(id) {
+  const docRef = db.collection(usersCollectionName).doc(id);
+
+  await docRef.update({
+    loginAttempts: 0,
+    isLocked: false,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  const updated = await docRef.get();
+
+  return serializeDoc(updated);
 },
 async logout(id)
 {

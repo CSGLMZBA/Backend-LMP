@@ -74,6 +74,16 @@ export const login = async (req, res) => {
       );
     }
 
+    if (error.message === 'ACCOUNT_LOCKED') {
+      return errorResponse(
+        res,
+        'Account locked due to too many failed login attempts',
+        'ACCOUNT_LOCKED',
+        [],
+        423
+      );
+    }
+
     if (error.message === 'USER_NOT_FOUND') {
       return errorResponse(
         res,

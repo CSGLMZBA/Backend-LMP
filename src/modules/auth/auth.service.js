@@ -15,6 +15,8 @@ const removeSensitiveFields = (data) => {
     : sanitize(data);
 };
 
+const MAX_LOGIN_ATTEMPTS = 5;
+
 export const register = async (data) => {
   let existingUser = await userRepository.findByEmailActive(data.email);
 
@@ -57,6 +59,10 @@ export const login = async (data) => {
     throw new Error('INVALID_CREDENTIALS');
   }
 
+  if (user.isLocked) {
+    throw new Error('ACCOUNT_LOCKED');
+  }
+
   // Compare the plain password with the stored hash
   const validPassword = await bcrypt.compare(
     data.password,
@@ -64,6 +70,13 @@ export const login = async (data) => {
   );
 
   if (!validPassword) {
+    const updatedUser = await userRepository.incrementLoginAttempts(user.id);
+
+    if ((updatedUser.loginAttempts || 0) >= MAX_LOGIN_ATTEMPTS) {
+      await userRepository.lockUser(user.id);
+      throw new Error('ACCOUNT_LOCKED');
+    }
+
     throw new Error('INVALID_CREDENTIALS');
   }
 
@@ -75,6 +88,7 @@ export const login = async (data) => {
 
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
+  await userRepository.resetLoginAttempts(user.id);
   const updatedUser = await userRepository.login(user.id);
 
   return {
