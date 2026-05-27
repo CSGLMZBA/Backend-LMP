@@ -29,7 +29,7 @@ const LEVEL_PERMISSIONS_MAP = {
 
 const getPermissionsForLevel = (level) => {
   const lvl = level ?? 0;
-  return LEVEL_PERMISSIONS_MAP[lvl] || LEVEL_PERMISSIONS_MAP[4];
+  return LEVEL_PERMISSIONS_MAP[lvl] || LEVEL_PERMISSIONS_MAP[0];
 };
 const serializeDoc = (doc) => ({
   id: doc.id,
@@ -103,9 +103,12 @@ async update(id, data) {
   return serializeDoc(updated)
 },
 async delete(id) {
-  const docRef = await db.collection(rolesCollectionName).doc(id).delete();
-  deleted = await docRef.get();
-  return serializeDoc(deleted);
+  const docRef = db.collection(rolesCollectionName).doc(id);
+  const existing = await docRef.get();
+
+  await docRef.delete();
+
+  return serializeDoc(existing);
 },
 async softDelete(id) {
   const docRef = db.collection(rolesCollectionName).doc(id)

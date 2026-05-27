@@ -97,6 +97,26 @@ export const softDelete = async (req, res) => {
 
     return successResponse(res, 'Role erased', result);
   } catch (error) {
+    if (error.message === 'ROLE_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Role not found',
+        'ROLE_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'ROLE_ALREADY_DELETED') {
+      return errorResponse(
+        res,
+        'Role already deleted',
+        'ROLE_ALREADY_DELETED',
+        [],
+        400
+      );
+    }
+
     return errorResponse(
       res,
       'Error deleting',

@@ -39,7 +39,7 @@ export const postRole = async (data) =>
 
 export const putRole = async (roleId, data) => {
   const role = await rolesRepository.findById(roleId);
-  console.log(role);
+
   if (!role) {
     throw new Error('ROLE_NOT_FOUND');
   }
@@ -56,11 +56,11 @@ export const softDelete = async (roleId) => {
   const role = await rolesRepository.findById(roleId);
 
   if (!role) {
-    throw createError('Role not found', 404, 'ROLE_NOT_FOUND');
+    throw new Error('ROLE_NOT_FOUND');
   }
 
   if (role.active === false) {
-    throw createError('Role already deleted', 400, 'ROLE_ALREADY_DELETED');
+    throw new Error('ROLE_ALREADY_DELETED');
   }
 
   const updated = await rolesRepository.softDelete(roleId);
