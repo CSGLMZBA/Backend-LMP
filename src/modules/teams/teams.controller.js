@@ -318,6 +318,68 @@ export const addTeamMember = async (req, res) => {
   }
 };
 
+export const updateTeamMemberRole = async (req, res) => {
+  try {
+    const member = await teamsService.updateTeamMemberRole(
+      req.params.teamId,
+      req.params.userId,
+      req.validatedData.role,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team member role updated',
+      member
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'MEMBER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Member not found',
+        'MEMBER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'LAST_OWNER_ROLE_CANNOT_CHANGE') {
+      return errorResponse(
+        res,
+        'The last owner role cannot be changed',
+        'LAST_OWNER_ROLE_CANNOT_CHANGE',
+        [],
+        400
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to modify this team',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error updating team member role');
+  }
+};
+
 export const removeTeamMember = async (req, res) => {
   try {
     const result = await teamsService.removeTeamMember(
@@ -352,11 +414,11 @@ export const removeTeamMember = async (req, res) => {
       );
     }
 
-    if (error.message === 'OWNER_CANNOT_BE_REMOVED') {
+    if (error.message === 'LAST_OWNER_CANNOT_BE_REMOVED') {
       return errorResponse(
         res,
-        'Owner cannot be removed',
-        'OWNER_CANNOT_BE_REMOVED',
+        'The last owner cannot be removed',
+        'LAST_OWNER_CANNOT_BE_REMOVED',
         [],
         400
       );

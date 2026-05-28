@@ -206,6 +206,30 @@ export const addTeamMember = async (teamId, data, addedBy) => {
   });
 };
 
+export const updateTeamMemberRole = async (teamId, userId, role, updatedBy) => {
+  await assertTeamRole(teamId, updatedBy, ['OWNER']);
+
+  const member = await teamsRepository.findTeamMember(teamId, userId);
+
+  if (!member) {
+    throw new Error('MEMBER_NOT_FOUND');
+  }
+
+  if (member.role === 'OWNER' && role !== 'OWNER') {
+    const ownerCount = await teamsRepository.countTeamOwners(teamId);
+
+    if (ownerCount <= 1) {
+      throw new Error('LAST_OWNER_ROLE_CANNOT_CHANGE');
+    }
+  }
+
+  return teamsRepository.updateTeamMember(member.id, {
+    role,
+    updatedAt: new Date(),
+    updatedBy,
+  });
+};
+
 export const removeTeamMember = async (teamId, userId, removedBy) => {
   await assertTeamRole(teamId, removedBy, ['OWNER']);
 
@@ -216,7 +240,11 @@ export const removeTeamMember = async (teamId, userId, removedBy) => {
   }
 
   if (member.role === 'OWNER') {
-    throw new Error('OWNER_CANNOT_BE_REMOVED');
+    const ownerCount = await teamsRepository.countTeamOwners(teamId);
+
+    if (ownerCount <= 1) {
+      throw new Error('LAST_OWNER_CANNOT_BE_REMOVED');
+    }
   }
 
   await teamsRepository.deleteTeamMember(member.id);

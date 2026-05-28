@@ -22,6 +22,11 @@ export const teamIdParamSchema = z.object({
   teamId: z.string().min(1, 'Team ID is required'),
 });
 
+export const teamMemberParamsSchema = z.object({
+  teamId: z.string().min(1, 'Team ID is required'),
+  userId: z.string().min(1, 'User ID is required'),
+});
+
 export const joinTeamSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
@@ -29,4 +34,8 @@ export const joinTeamSchema = z.object({
 export const addTeamMemberSchema = z.object({
   userId: z.string().min(1),
   role: z.enum(['MANAGER', 'MEMBER', 'CLIENT']).default('MEMBER'),
+});
+
+export const updateTeamMemberRoleSchema = z.object({
+  role: z.enum(['OWNER', 'MANAGER', 'MEMBER', 'CLIENT']),
 });

@@ -223,14 +223,14 @@ Falta:
 - Remover miembro.
 - Actualizar equipo.
 - Archivar/eliminar equipo mediante soft archive.
+- Cambiar rol de miembro.
+- Evitar remover o degradar al ultimo `OWNER`.
 - Permisos por `team_members`.
 - Ya no dependemos de `teams.members`.
 
 ### Falta
 
-- Cambiar rol de miembro.
 - Validar parametros en rutas de equipos.
-- Evitar remover al ultimo `OWNER`.
 - Definir si `CLIENT` puede crear equipo o solo `user/admin`.
 - Auditoria de acciones importantes:
   - create team
@@ -248,11 +248,10 @@ Falta:
   - Probar manualmente `DELETE /teams/:teamId`.
   - Documentar request/response de update y archive.
 - Persona B:
-  - Crear `PATCH /teams/:teamId/members/:userId/role`.
-  - Validar roles permitidos.
-  - Evitar modificaciones indebidas sobre `OWNER`.
+  - Probar manualmente `PATCH /teams/:teamId/members/:userId/role`.
+  - Probar que no se pueda degradar al ultimo `OWNER`.
+  - Probar que no se pueda remover al ultimo `OWNER`.
 - Persona C:
-  - Implementar regla de ultimo `OWNER`.
   - Definir permisos globales para crear equipos.
   - Agregar auditoria de equipos.
 

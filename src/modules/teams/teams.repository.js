@@ -45,6 +45,24 @@ export const findTeamMember = async (teamId, userId) => {
   };
 };
 
+export const updateTeamMember = async (memberId, data) => {
+  const memberRef = db.collection(teamMembersCollectionName).doc(memberId);
+  await memberRef.update(data);
+
+  const updatedDoc = await memberRef.get();
+  return { id: updatedDoc.id, ...updatedDoc.data() };
+};
+
+export const countTeamOwners = async (teamId) => {
+  const snapshot = await db
+    .collection(teamMembersCollectionName)
+    .where('teamId', '==', teamId)
+    .where('role', '==', 'OWNER')
+    .get();
+
+  return snapshot.size;
+};
+
 export const getTeamMembersByTeamId = async (teamId) => {
   const snapshot = await db
     .collection(teamMembersCollectionName)

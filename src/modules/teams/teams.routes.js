@@ -53,9 +53,16 @@ router.post(
   teamsController.addTeamMember
 );
 
+router.patch(
+  '/:teamId/members/:userId/role',
+  validate(teamsSchema.teamMemberParamsSchema, 'params'),
+  validate(teamsSchema.updateTeamMemberRoleSchema),
+  teamsController.updateTeamMemberRole
+);
+
 router.delete(
   '/:teamId/members/:userId',
-  validate(teamsSchema.teamIdParamSchema, 'params'),
+  validate(teamsSchema.teamMemberParamsSchema, 'params'),
   teamsController.removeTeamMember
 );
 
