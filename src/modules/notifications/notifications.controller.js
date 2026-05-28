@@ -3,9 +3,7 @@ import { successResponse, errorResponse } from '../../utils/response.js';
 
 export const getNotifications = async (req, res) => {
   try {
-    
     const notifications = await notificationsService.getNotificationsForRecipient(req.user.id);
-
     return successResponse(
       res,
       'Notifications retrieved successfully',

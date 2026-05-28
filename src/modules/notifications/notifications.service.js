@@ -5,6 +5,7 @@ export const createNotification = async (data) => {
     title: data.title,
     body: data.body,
     type: data.type,
+    recipientId: data.recipientId,
     read: false,
   });
 

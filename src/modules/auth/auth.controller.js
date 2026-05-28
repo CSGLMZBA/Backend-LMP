@@ -32,7 +32,7 @@ export const register = async (req, res) => {
       body: `${user.userName} was created at ${user.createdAt}`,
       type: 2,
     }
-    console.log(await notificationsController.createNotificationMass(notifData,[user.id]));
+    await notificationsController.createNotificationMass(notifData,[user.id]);
     return successResponse(
       res,
       'User Registered',
@@ -192,7 +192,13 @@ export const updatePassword = async (req, res) => {
         field: 'password',
       },
     });
-
+    const notifData = 
+    {
+      title: "Password changed",
+      body: `Hello ${result.userName} your password has been changed successfully`,
+      type: 2,
+    }
+    await notificationsController.createNotificationMass(notifData,[userId]);
     return successResponse(
       res,
       'Password Updated succcesfully',
