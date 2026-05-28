@@ -5,6 +5,8 @@ import {
 } from '../../utils/response.js';
 
 const stageTaskRelationErrors = {
+  CHART_NOT_FOUND: ['Chart not found', 404],
+  CHART_TEAM_MISMATCH: ['Chart does not belong to this team', 400],
   TASK_NOT_FOUND: ['Task not found', 404],
   TASK_STAGE_TEAM_MISMATCH: ['Task and stage must belong to the same team', 400],
   TASK_STAGE_CHART_MISMATCH: ['Task and stage must belong to the same chart', 400],
@@ -136,6 +138,9 @@ export const getStagesByChart = async (req, res) => {
       stages
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'TEAM_NOT_FOUND') {
       return errorResponse(
         res,
@@ -301,6 +306,9 @@ export const reorderStages = async (req, res) => {
       stages
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'TEAM_NOT_FOUND') {
       return errorResponse(
         res,
@@ -556,6 +564,9 @@ export const deleteStage = async (req, res) => {
       result
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,

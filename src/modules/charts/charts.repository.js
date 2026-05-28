@@ -5,10 +5,13 @@ const { FieldValue } = admin.firestore;
 
 const chartsCollectionName = 'charts';
 
+const isActiveChart = (chart) => chart.isArchived !== true;
+
 export const createChart = async (chartsData) => {
   const chartsRef = db.collection(chartsCollectionName);
   const docRef = await chartsRef.add({
     ...chartsData,
+    isArchived: false,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -31,10 +34,12 @@ export const getChartsByTeamId = async (teamId) => {
     .where('teamId', '==', teamId) // Check that we are a member
     .get();
 
-  return chartsSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return chartsSnapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .filter(isActiveChart);
 };
 
 export const getChartsByProjectId = async (projectId) => {
@@ -43,10 +48,12 @@ export const getChartsByProjectId = async (projectId) => {
     .where('projectId', '==', projectId)
     .get();
 
-  return chartsSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  return chartsSnapshot.docs
+    .map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .filter(isActiveChart);
 };
 
 export const updateChart = async (chartId, data) => {
@@ -60,6 +67,14 @@ export const updateChart = async (chartId, data) => {
   const updated = await docRef.get();
 
   return { id: updated.id, ...updated.data() };
+};
+
+export const archiveChart = async (chartId, userId) => {
+  return updateChart(chartId, {
+    isArchived: true,
+    archivedAt: FieldValue.serverTimestamp(),
+    archivedBy: userId,
+  });
 };
 
 export const addStageToChart = async (chartId, stageId) => {

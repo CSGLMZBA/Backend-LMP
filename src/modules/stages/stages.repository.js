@@ -131,6 +131,31 @@ export const stagesRepository = {
     return serializeDoc(updated);
   },
 
+  async archiveByChartId(chartId, teamId, userId) {
+    const stages = await this.findByChartId(chartId, teamId);
+
+    if (stages.length === 0) {
+      return [];
+    }
+
+    const batch = db.batch();
+    const stageRefs = stages.map((stage) => {
+      const docRef = db.collection(stagesCollectionName).doc(stage.id);
+      batch.update(docRef, {
+        isArchived: true,
+        archivedAt: FieldValue.serverTimestamp(),
+        archivedBy: userId,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return docRef;
+    });
+
+    await batch.commit();
+
+    const updatedDocs = await Promise.all(stageRefs.map((docRef) => docRef.get()));
+    return updatedDocs.map(serializeDoc);
+  },
+
   // ELIMINAR ETAPA FÍSICAMENTE (si es necesario)
   async hardDelete(stageId) {
     const docRef = db.collection(stagesCollectionName).doc(stageId);

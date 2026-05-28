@@ -157,3 +157,42 @@ export const updateChart = async (req, res) => {
     return errorResponse(res, 'Error updating chart');
   }
 };
+
+export const archiveChart = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chartId } = req.params;
+    const chart = await chartsService.archiveChart(chartId, userId);
+
+    return successResponse(
+      res,
+      'Chart archived successfully',
+      chart
+    );
+  } catch (error) {
+    if (error.message === 'CHART_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Chart not found',
+        'CHART_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to archive this chart',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error archiving chart');
+  }
+};

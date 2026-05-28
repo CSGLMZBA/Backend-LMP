@@ -16,12 +16,17 @@ router.post('/',
 router.get('/', 
     chartsController.getMyCharts);
 
-router.get('/:chartId', 
+router.get('/:chartId',
+    validate(chartsSchema.updateParams, 'params'),
     chartsController.getChart);
 
 router.patch('/:chartId', 
     validate(chartsSchema.updateParams, 'params'),
     validate(chartsSchema.update), 
     chartsController.updateChart);
+
+router.delete('/:chartId',
+    validate(chartsSchema.updateParams, 'params'),
+    chartsController.archiveChart);
 
 export default router;

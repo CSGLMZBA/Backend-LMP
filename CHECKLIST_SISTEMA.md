@@ -341,22 +341,27 @@ Falta:
   - `PATCH /api/stages/chart/:chartId/team/:teamId/order`
 - Validacion de orden unico dentro del chart.
 - Proteccion para evitar stages default duplicadas.
+- Flujo Kanban definido:
+  - frontend mueve tareas con `POST /api/stages/tasks/move`
+  - `PUT /api/tasks/:id` queda para editar datos generales de la tarea
+  - `PATCH /api/tasks/:id/status` queda para cambiar status logico sin mover columna
+- Contrato documentado en `docs/KANBAN_TASK_FLOW.md`.
+- Borrar/archivar chart mediante soft archive:
+  - `DELETE /api/charts/:chartId`
+- Al archivar chart se archivan tambien sus stages activos.
+- Listados y lecturas de charts ignoran charts archivados.
+- Operaciones de stages validan que el chart exista, pertenezca al equipo y no este archivado.
 
 ### Falta
 
-- Borrar/archivar chart.
-- Validar mejor que cada stage pertenece al chart correcto.
-- Definir si el frontend movera tareas por:
-  - `/stages/tasks/move`
-  - o update de task.
 - Auditoria de charts/stages.
 
 ### Tareas Pequenas
 
 - Persona A:
-  - Crear `DELETE /charts/:chartId` como soft delete.
-  - Validar permisos por equipo/proyecto.
-  - Decidir que pasa con sus stages.
+  - Probar `DELETE /charts/:chartId`.
+  - Probar que un chart archivado ya no aparezca en listados.
+  - Probar que los stages de un chart archivado ya no puedan operarse.
 - Persona B:
   - Probar reordenamiento de stages.
   - Probar que `POST /stages/default` falle si ya hay stages activos.
@@ -422,8 +427,8 @@ Falta:
 
 - Persona A:
   - Probar movimiento de tareas entre stages default.
-  - Probar `PUT /tasks/:id` cambiando `stageId`.
-  - Documentar que `stageId` controla Kanban y `status` controla reportes.
+  - Probar que `PUT /tasks/:id` siga editando datos generales.
+  - Probar que `PATCH /tasks/:id/status` no mueva columnas.
 - Persona B:
   - Crear modulo `comments`.
   - Crear endpoints de comentarios por tarea.

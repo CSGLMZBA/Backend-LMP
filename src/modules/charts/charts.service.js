@@ -14,6 +14,14 @@ const mapChart = (chart) => ({
   updatedAt: chart.updatedAt,
 });
 
+const assertActiveChart = (chart) => {
+  if (!chart || chart.isArchived) {
+    throw new Error('CHART_NOT_FOUND');
+  }
+
+  return chart;
+};
+
 const assertProjectBelongsToTeam = async (projectId, teamId) => {
   const project = await projectsRepository.getProjectById(projectId);
 
@@ -36,7 +44,7 @@ export const createChart = async (data, userId) => {
     name: data.name,
     teamId: data.teamId,
     projectId: data.projectId,
-    stageIds: data.stageIds,
+    stageIds: data.stageIds || [],
     creatorId: userId,
   };
 
@@ -73,10 +81,9 @@ export const getChartsByUser = async (userId) => {
 };
 
 export const getChartById = async (chartId, userId) => {
-  const chart = await chartsRepository.getChartById(chartId);
-  if (!chart) {
-    throw new Error('CHART_NOT_FOUND');
-  }
+  const chart = assertActiveChart(
+    await chartsRepository.getChartById(chartId)
+  );
 
   try {
     await teamsService.assertTeamMembership(chart.teamId, userId);
@@ -92,11 +99,9 @@ export const getChartById = async (chartId, userId) => {
 };
 
 export const updateChart = async (chartId, data, userId) => {
-  const chart = await chartsRepository.getChartById(chartId);
-
-  if (!chart) {
-    throw new Error('CHART_NOT_FOUND');
-  }
+  const chart = assertActiveChart(
+    await chartsRepository.getChartById(chartId)
+  );
 
   await teamsService.assertTeamRole(chart.teamId, userId, [
     'OWNER',
@@ -104,4 +109,25 @@ export const updateChart = async (chartId, data, userId) => {
   ]);
 
   return chartsRepository.updateChart(chartId, data);
+};
+
+export const archiveChart = async (chartId, userId) => {
+  const chart = assertActiveChart(
+    await chartsRepository.getChartById(chartId)
+  );
+
+  await teamsService.assertTeamRole(chart.teamId, userId, [
+    'OWNER',
+    'MANAGER',
+  ]);
+
+  await stagesService.archiveStagesByChart(chart.id, chart.teamId, userId);
+  const archivedChart = await chartsRepository.archiveChart(chartId, userId);
+
+  return {
+    ...mapChart(archivedChart),
+    isArchived: archivedChart.isArchived,
+    archivedAt: archivedChart.archivedAt,
+    archivedBy: archivedChart.archivedBy,
+  };
 };

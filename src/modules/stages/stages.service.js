@@ -74,6 +74,28 @@ const assertOrderAvailable = async (chartId, teamId, order, stageId = null) => {
   }
 };
 
+const assertActiveChartForTeam = async (chartId, teamId) => {
+  const chart = await chartsRepository.getChartById(chartId);
+
+  if (!chart || chart.isArchived) {
+    throw new Error('CHART_NOT_FOUND');
+  }
+
+  if (chart.teamId !== teamId) {
+    throw new Error('CHART_TEAM_MISMATCH');
+  }
+
+  return chart;
+};
+
+const assertActiveStage = (stage) => {
+  if (!stage || stage.isArchived) {
+    throw new Error('STAGE_NOT_FOUND');
+  }
+
+  return stage;
+};
+
 const buildMappedStatusUpdate = (task, stage, userId) => {
   if (!stage.mappedStatus || task.status === stage.mappedStatus) {
     return {};
@@ -136,15 +158,7 @@ export const createStage = async (data, userId) => {
   
   await assertStageTeamAccess(data.teamId, userId);
 
-  const chart = await chartsRepository.getChartById(data.chartId);
-
-  if (!chart) {
-    throw new Error('CHART_NOT_FOUND');
-  }
-
-  if (chart.teamId !== data.teamId) {
-    throw new Error('CHART_TEAM_MISMATCH');
-  }
+  await assertActiveChartForTeam(data.chartId, data.teamId);
   
   const order = data.order ?? await getNextStageOrder(data.chartId, data.teamId);
   await assertOrderAvailable(data.chartId, data.teamId, order);
@@ -174,6 +188,7 @@ export const createStage = async (data, userId) => {
 // OBTENER ETAPAS POR CHART 
 export const getStagesByChart = async (chartId, teamId, userId) => {
   await assertStageTeamAccess(teamId, userId);
+  await assertActiveChartForTeam(chartId, teamId);
   
   // Obtener etapas del chart
   const stages = await stagesRepository.findByChartId(chartId, teamId);
@@ -183,17 +198,15 @@ export const getStagesByChart = async (chartId, teamId, userId) => {
 
 // OBTENER ETAPA POR ID
 export const getStageById = async (stageId, userId) => {
-  const stage = await stagesRepository.findById(stageId);
-  
-  if (!stage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const stage = assertActiveStage(await stagesRepository.findById(stageId));
   
   await assertStageTeamAccess(
     stage.teamId,
     userId,
     'UNAUTHORIZED_STAGE_ACCESS'
   );
+
+  await assertActiveChartForTeam(stage.chartId, stage.teamId);
   
   return mapStage(stage);
 };
@@ -201,11 +214,9 @@ export const getStageById = async (stageId, userId) => {
 //ACTUALIZAR ETAPA
 export const updateStage = async (stageId, payload, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.findById(stageId);
-  
-  if (!stage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const stage = assertActiveStage(await stagesRepository.findById(stageId));
+
+  await assertActiveChartForTeam(stage.chartId, stage.teamId);
   
   await assertStageTeamAccess(
     stage.teamId,
@@ -252,15 +263,7 @@ export const reorderStages = async (chartId, teamId, stageIds, userId) => {
     'UNAUTHORIZED_STAGE_UPDATE'
   );
 
-  const chart = await chartsRepository.getChartById(chartId);
-
-  if (!chart) {
-    throw new Error('CHART_NOT_FOUND');
-  }
-
-  if (chart.teamId !== teamId) {
-    throw new Error('CHART_TEAM_MISMATCH');
-  }
+  await assertActiveChartForTeam(chartId, teamId);
 
   const stages = await stagesRepository.findByChartId(chartId, teamId);
   const existingIds = new Set(stages.map((stage) => stage.id));
@@ -291,11 +294,9 @@ export const reorderStages = async (chartId, teamId, stageIds, userId) => {
 // AGREGAR TAREA A ETAPA
 export const addTaskToStage = async (stageId, taskId, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.findById(stageId);
-  
-  if (!stage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const stage = assertActiveStage(await stagesRepository.findById(stageId));
+
+  await assertActiveChartForTeam(stage.chartId, stage.teamId);
   
   await assertStageTeamAccess(
     stage.teamId,
@@ -349,11 +350,9 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
 //REMOVER TAREA DE ETAPA
 export const removeTaskFromStage = async (stageId, taskId, userId) => {
   // Verificar que la etapa existe
-  const stage = await stagesRepository.findById(stageId);
-  
-  if (!stage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const stage = assertActiveStage(await stagesRepository.findById(stageId));
+
+  await assertActiveChartForTeam(stage.chartId, stage.teamId);
   
   await assertStageTeamAccess(
     stage.teamId,
@@ -386,12 +385,8 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
 //MOVER TAREA ENTRE ETAPAS
 export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, userId) => {
   // Verificar que ambas etapas existen
-  const fromStage = await stagesRepository.findById(fromStageId);
-  const toStage = await stagesRepository.findById(toStageId);
-  
-  if (!fromStage || !toStage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const fromStage = assertActiveStage(await stagesRepository.findById(fromStageId));
+  const toStage = assertActiveStage(await stagesRepository.findById(toStageId));
   
   // Verificar que pertenecen al mismo equipo
   if (fromStage.teamId !== toStage.teamId) {
@@ -401,6 +396,8 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
   if (fromStage.chartId !== toStage.chartId) {
     throw new Error('STAGES_FROM_DIFFERENT_CHARTS');
   }
+
+  await assertActiveChartForTeam(fromStage.chartId, fromStage.teamId);
   
   await assertStageTeamAccess(
     fromStage.teamId,
@@ -454,11 +451,9 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
 
 // ELIMINAR ETAPA (soft delete)
 export const deleteStage = async (stageId, userId) => {
-  const stage = await stagesRepository.findById(stageId);
-  
-  if (!stage) {
-    throw new Error('STAGE_NOT_FOUND');
-  }
+  const stage = assertActiveStage(await stagesRepository.findById(stageId));
+
+  await assertActiveChartForTeam(stage.chartId, stage.teamId);
   
   await assertStageTeamAccess(
     stage.teamId,
@@ -478,8 +473,14 @@ export const deleteStage = async (stageId, userId) => {
   return { deleted: true, stageId: stageId };
 };
 
+export const archiveStagesByChart = async (chartId, teamId, userId) => {
+  return stagesRepository.archiveByChartId(chartId, teamId, userId);
+};
+
 //CREAR ETAPAS POR DEFECTO PARA NUEVO CHART
 export const createDefaultStages = async (chartId, teamId, userId) => {
+  await assertActiveChartForTeam(chartId, teamId);
+
   const existingStages = await stagesRepository.findByChartId(chartId, teamId);
 
   if (existingStages.length > 0) {
