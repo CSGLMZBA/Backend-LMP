@@ -4,6 +4,26 @@ import {
   errorResponse,
 } from '../../utils/response.js';
 
+const stageTaskRelationErrors = {
+  TASK_NOT_FOUND: ['Task not found', 404],
+  TASK_STAGE_TEAM_MISMATCH: ['Task and stage must belong to the same team', 400],
+  TASK_STAGE_CHART_MISMATCH: ['Task and stage must belong to the same chart', 400],
+  TASK_NOT_IN_SOURCE_STAGE: ['Task is not in the source stage', 400],
+  TASK_ALREADY_IN_ANOTHER_STAGE: ['Task is already in another stage', 400],
+  STAGES_FROM_DIFFERENT_CHARTS: ['Stages must belong to the same chart', 400],
+};
+
+const handleStageTaskRelationError = (res, error) => {
+  const relationError = stageTaskRelationErrors[error.message];
+
+  if (!relationError) {
+    return null;
+  }
+
+  const [message, status] = relationError;
+  return errorResponse(res, message, error.message, [], status);
+};
+
 // CREAR ETAPA
 export const createStage = async (req, res) => {
   try {
@@ -149,6 +169,9 @@ export const getStageById = async (req, res) => {
       stage
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,
@@ -192,6 +215,9 @@ export const updateStage = async (req, res) => {
       stage
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,
@@ -253,6 +279,9 @@ export const addTaskToStage = async (req, res) => {
       stage
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,
@@ -313,6 +342,9 @@ export const removeTaskFromStage = async (req, res) => {
       stage
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,
@@ -369,6 +401,9 @@ export const moveTaskBetweenStages = async (req, res) => {
       result
     );
   } catch (error) {
+    const relationError = handleStageTaskRelationError(res, error);
+    if (relationError) return relationError;
+
     if (error.message === 'STAGE_NOT_FOUND') {
       return errorResponse(
         res,

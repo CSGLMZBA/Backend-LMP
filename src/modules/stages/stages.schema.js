@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+const mappedStatusSchema = z
+  .enum(['PENDING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED', 'CANCELLED'])
+  .nullable()
+  .optional();
+
 export const stagesSchema = {
   //  CREAR ETAPA
   create: z.object({
@@ -8,6 +13,7 @@ export const stagesSchema = {
     chartId: z.string().min(1, 'Chart ID is required'),
     taskIds: z.array(z.string()).optional().default([]),
     wipLimit: z.number().int().min(0, 'WIP limit must be 0 or greater').nullable().optional().default(null),
+    mappedStatus: mappedStatusSchema.default(null),
   }),
 
   //OBTENER ETAPAS POR CHART
@@ -29,6 +35,7 @@ export const stagesSchema = {
   update: z.object({
     name: z.string().min(1, 'Stage name is required').max(100, 'Stage name must be less than 100 characters').optional(),
     wipLimit: z.number().int().min(0, 'WIP limit must be 0 or greater').nullable().optional(),
+    mappedStatus: mappedStatusSchema,
     isArchived: z.boolean().optional(),
   }),
 
@@ -75,10 +82,10 @@ export const stagesSchema = {
 
 // Constantes útiles
 export const DEFAULT_STAGES = [
-  { name: 'To Do', wipLimit: null },
-  { name: 'In Progress', wipLimit: 5 },
-  { name: 'Review', wipLimit: 3 },
-  { name: 'Done', wipLimit: null }
+  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING' },
+  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS' },
+  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW' },
+  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED' }
 ];
 
 export const STAGE_ERRORS = {

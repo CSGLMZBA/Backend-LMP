@@ -383,14 +383,21 @@ Falta:
   - `blockedReason`
 - Validacion de parametros en rutas.
 - Historial de status en `statusHistory`.
+- `stage.mappedStatus` opcional para sincronizar columnas Kanban con estado logico.
+- Stages default con `mappedStatus`:
+  - `To Do` -> `PENDING`
+  - `In Progress` -> `IN_PROGRESS`
+  - `Review` -> `REVIEW`
+  - `Done` -> `COMPLETED`
+- Mover tareas entre stages actualiza:
+  - `task.stageId`
+  - `stage.taskIds`
+  - `task.status` si la etapa destino tiene `mappedStatus`
+- Cambiar `stageId` desde `PUT /tasks/:id` ya sincroniza `stage.taskIds`.
+- Se valida que task/stage/chart/team sean compatibles al mover tareas.
 
 ### Falta Critico
 
-- Si se cambia `stageId` desde `PUT /tasks/:id`, debe sincronizarse con `stage.taskIds`.
-- Hay dos conceptos separados:
-  - `task.status`: estado logico/reportes.
-  - `task.stageId`: columna Kanban.
-- Falta documentar y hacer consistente ese flujo.
 - Falta manejo real de subtareas o decidir posponerlo.
 - Faltan comentarios, obligatorios para TaskFlow:
   - `GET /api/tasks/:id/comments`
@@ -410,9 +417,9 @@ Falta:
 ### Tareas Pequenas
 
 - Persona A:
-  - Hacer que cambio de `stageId` use la misma logica que `moveTaskBetweenStages`.
-  - Evitar que `PUT /tasks/:id` desincronice stages.
-  - Mantener las validaciones cruzadas cuando se corrija la sincronizacion.
+  - Probar movimiento de tareas entre stages default.
+  - Probar `PUT /tasks/:id` cambiando `stageId`.
+  - Documentar que `stageId` controla Kanban y `status` controla reportes.
 - Persona B:
   - Crear modulo `comments`.
   - Crear endpoints de comentarios por tarea.

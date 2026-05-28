@@ -5,6 +5,26 @@ import { stagesRepository } from '../stages/stages.repository.js';
 
 const sortByPriority = (tasks) => [...tasks].sort((a, b) => b.priority - a.priority);
 
+const buildMappedStatusUpdate = (task, stage, userId) => {
+  if (!stage?.mappedStatus || task.status === stage.mappedStatus) {
+    return {};
+  }
+
+  return {
+    status: stage.mappedStatus,
+    completedAt: stage.mappedStatus === 'COMPLETED' ? new Date() : null,
+    statusHistory: [
+      ...(task.statusHistory || []),
+      {
+        status: stage.mappedStatus,
+        changedBy: userId,
+        changedAt: new Date(),
+        comment: `Estado sincronizado por cambio a etapa ${stage.name}`,
+      },
+    ],
+  };
+};
+
 const mapTaskListItem = (task) => ({
   id: task.id,
   name: task.name,
@@ -41,6 +61,7 @@ const assertTaskRelations = async ({ teamId, projectId, chartId, stageId }) => {
 
   let resolvedChartId = chartId || null;
   let resolvedStageId = stageId || null;
+  let resolvedStage = null;
 
   if (resolvedStageId) {
     const stage = await stagesRepository.findById(resolvedStageId);
@@ -54,6 +75,7 @@ const assertTaskRelations = async ({ teamId, projectId, chartId, stageId }) => {
     }
 
     resolvedChartId = stage.chartId;
+    resolvedStage = stage;
   }
 
   if (resolvedChartId) {
@@ -76,7 +98,38 @@ const assertTaskRelations = async ({ teamId, projectId, chartId, stageId }) => {
     projectId,
     chartId: resolvedChartId,
     stageId: resolvedStageId,
+    stage: resolvedStage,
   };
+};
+
+const syncTaskStage = async (task, nextStageId, userId) => {
+  const currentStageId = task.stageId || null;
+  const targetStageId = nextStageId || null;
+
+  if (currentStageId === targetStageId) {
+    return {};
+  }
+
+  let targetStage = null;
+
+  if (targetStageId) {
+    targetStage = await stagesRepository.findById(targetStageId);
+
+    const targetTaskCount = (targetStage.taskIds || []).length;
+    if (targetStage.wipLimit !== null && targetTaskCount >= targetStage.wipLimit) {
+      throw new Error('DESTINATION_WIP_LIMIT_REACHED');
+    }
+  }
+
+  if (currentStageId) {
+    await stagesRepository.removeTask(currentStageId, task.id);
+  }
+
+  if (targetStageId) {
+    await stagesRepository.addTask(targetStageId, task.id);
+  }
+
+  return buildMappedStatusUpdate(task, targetStage, userId);
 };
 
 export const createTask = async (data, userId) => {
@@ -128,8 +181,8 @@ export const createTask = async (data, userId) => {
     createdAt: new Date(),
     startDate: data.startDate || null,
     dueDate: data.dueDate || null,
-    completedAt: null,
-    status: 'PENDING',
+    completedAt: relations.stage?.mappedStatus === 'COMPLETED' ? new Date() : null,
+    status: relations.stage?.mappedStatus || 'PENDING',
     isBlocked: data.isBlocked || false,
     blockedReason: data.blockedReason || null,
     timeEstimate: data.timeEstimate || null,
@@ -139,7 +192,7 @@ export const createTask = async (data, userId) => {
     tags: data.tags || [],
     attachments: data.attachments || [],
     statusHistory: [{
-      status: 'PENDING',
+      status: relations.stage?.mappedStatus || 'PENDING',
       changedBy: userId,
       changedAt: new Date(),
       comment: 'Tarea creada'
@@ -281,6 +334,13 @@ export const updateTask = async (taskId, updateData, userId) => {
     chartId: relations.chartId,
     stageId: relations.stageId,
   };
+
+  if (updateData.stageId !== undefined) {
+    Object.assign(
+      updatedData,
+      await syncTaskStage(task, relations.stageId, userId)
+    );
+  }
 
   if (updateData.name) updatedData.name = updateData.name.trim();
   if (updateData.description !== undefined) updatedData.description = updateData.description;

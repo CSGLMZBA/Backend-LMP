@@ -9,6 +9,7 @@ const relationErrorMessages = {
   CHART_TEAM_MISMATCH: ['Chart does not belong to this team', 400],
   CHART_PROJECT_MISMATCH: ['Chart does not belong to this project', 400],
   STAGE_CHART_MISMATCH: ['Stage does not belong to this chart', 400],
+  DESTINATION_WIP_LIMIT_REACHED: ['Work in progress limit reached in destination stage', 400],
 };
 
 const handleRelationError = (res, error) => {

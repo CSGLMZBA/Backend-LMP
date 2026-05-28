@@ -3,6 +3,13 @@ import * as teamsService from '../teams/teams.service.js';
 import * as tasksRepository from '../Task/task.repository.js';
 import * as chartsRepository from '../charts/charts.repository.js';
 
+const DEFAULT_STAGES = [
+  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING' },
+  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS' },
+  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW' },
+  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED' },
+];
+
 // Helper para remover campos sensibles (si los hubiera)
 const removeSensitiveFields = (stage) => {
   if (!stage) return stage;
@@ -28,6 +35,63 @@ const assertStageTeamAccess = async (
 
     throw error;
   }
+};
+
+const mapStage = (stage) => removeSensitiveFields({
+  id: stage.id,
+  name: stage.name,
+  teamId: stage.teamId,
+  chartId: stage.chartId,
+  taskIds: stage.taskIds || [],
+  wipLimit: stage.wipLimit,
+  mappedStatus: stage.mappedStatus || null,
+  createdBy: stage.createdBy,
+  createdAt: stage.createdAt,
+});
+
+const buildMappedStatusUpdate = (task, stage, userId) => {
+  if (!stage.mappedStatus || task.status === stage.mappedStatus) {
+    return {};
+  }
+
+  return {
+    status: stage.mappedStatus,
+    completedAt: stage.mappedStatus === 'COMPLETED' ? new Date() : null,
+    statusHistory: [
+      ...(task.statusHistory || []),
+      {
+        status: stage.mappedStatus,
+        changedBy: userId,
+        changedAt: new Date(),
+        comment: `Estado sincronizado por movimiento a etapa ${stage.name}`,
+      },
+    ],
+  };
+};
+
+const assertTaskCanMove = async (taskId, fromStage, toStage) => {
+  const task = await tasksRepository.getTaskById(taskId);
+
+  if (!task || task.isDeleted) {
+    throw new Error('TASK_NOT_FOUND');
+  }
+
+  if (task.teamId !== fromStage.teamId || task.teamId !== toStage.teamId) {
+    throw new Error('TASK_STAGE_TEAM_MISMATCH');
+  }
+
+  if (fromStage.chartId !== toStage.chartId || task.chartId !== toStage.chartId) {
+    throw new Error('TASK_STAGE_CHART_MISMATCH');
+  }
+
+  const taskIsInSourceStage =
+    task.stageId === fromStage.id || (fromStage.taskIds || []).includes(taskId);
+
+  if (!taskIsInSourceStage) {
+    throw new Error('TASK_NOT_IN_SOURCE_STAGE');
+  }
+
+  return task;
 };
 
 // CREAR ETAPA
@@ -64,6 +128,7 @@ export const createStage = async (data, userId) => {
     chartId: data.chartId,
     taskIds: data.taskIds || [],
     wipLimit: data.wipLimit || null,
+    mappedStatus: data.mappedStatus || null,
     createdBy: userId,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -74,16 +139,7 @@ export const createStage = async (data, userId) => {
   const newStage = await stagesRepository.create(stageData);
   await chartsRepository.addStageToChart(data.chartId, newStage.id);
   
-  return removeSensitiveFields({
-    id: newStage.id,
-    name: newStage.name,
-    teamId: newStage.teamId,
-    chartId: newStage.chartId,
-    taskIds: newStage.taskIds,
-    wipLimit: newStage.wipLimit,
-    createdBy: newStage.createdBy,
-    createdAt: newStage.createdAt
-  });
+  return mapStage(newStage);
 };
 
 // OBTENER ETAPAS POR CHART 
@@ -93,16 +149,7 @@ export const getStagesByChart = async (chartId, teamId, userId) => {
   // Obtener etapas del chart
   const stages = await stagesRepository.findByChartId(chartId, teamId);
   
-  return stages.map(stage => removeSensitiveFields({
-    id: stage.id,
-    name: stage.name,
-    teamId: stage.teamId,
-    chartId: stage.chartId,
-    taskIds: stage.taskIds || [],
-    wipLimit: stage.wipLimit,
-    createdBy: stage.createdBy,
-    createdAt: stage.createdAt
-  }));
+  return stages.map(mapStage);
 };
 
 // OBTENER ETAPA POR ID
@@ -119,16 +166,7 @@ export const getStageById = async (stageId, userId) => {
     'UNAUTHORIZED_STAGE_ACCESS'
   );
   
-  return removeSensitiveFields({
-    id: stage.id,
-    name: stage.name,
-    teamId: stage.teamId,
-    chartId: stage.chartId,
-    taskIds: stage.taskIds || [],
-    wipLimit: stage.wipLimit,
-    createdBy: stage.createdBy,
-    createdAt: stage.createdAt
-  });
+  return mapStage(stage);
 };
 
 //ACTUALIZAR ETAPA
@@ -171,16 +209,7 @@ export const updateStage = async (stageId, payload, userId) => {
   // Actualizar en base de datos
   const updated = await stagesRepository.update(stageId, data);
   
-  return removeSensitiveFields({
-    id: updated.id,
-    name: updated.name,
-    teamId: updated.teamId,
-    chartId: updated.chartId,
-    taskIds: updated.taskIds || [],
-    wipLimit: updated.wipLimit,
-    createdBy: updated.createdBy,
-    createdAt: updated.createdAt
-  });
+  return mapStage(updated);
 };
 
 // AGREGAR TAREA A ETAPA
@@ -209,15 +238,34 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
     throw new Error('TASK_ALREADY_IN_STAGE');
   }
   
-  // Agregar tarea al array del stage y actualizar stageId en la tarea
+  const task = await tasksRepository.getTaskById(taskId);
+  if (!task || task.isDeleted) {
+    throw new Error('TASK_NOT_FOUND');
+  }
+
+  if (task.teamId !== stage.teamId || task.chartId !== stage.chartId) {
+    throw new Error('TASK_STAGE_CHART_MISMATCH');
+  }
+
+  if (task.stageId && task.stageId !== stageId) {
+    throw new Error('TASK_ALREADY_IN_ANOTHER_STAGE');
+  }
+
+  // Agregar tarea al array del stage y actualizar stageId/status en la tarea
   const updated = await stagesRepository.addTask(stageId, taskId);
-  await tasksRepository.updateTask(taskId, { stageId, updatedAt: new Date() });
+  await tasksRepository.updateTask(taskId, {
+    stageId,
+    ...buildMappedStatusUpdate(task, stage, userId),
+    updatedAt: new Date(),
+    updatedBy: userId,
+  });
 
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
     taskIds: updated.taskIds || [],
-    wipLimit: updated.wipLimit
+    wipLimit: updated.wipLimit,
+    mappedStatus: updated.mappedStatus || null,
   });
 };
 
@@ -243,12 +291,17 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
   
   // Remover tarea del array del stage y limpiar stageId en la tarea
   const updated = await stagesRepository.removeTask(stageId, taskId);
-  await tasksRepository.updateTask(taskId, { stageId: null, updatedAt: new Date() });
+  await tasksRepository.updateTask(taskId, {
+    stageId: null,
+    updatedAt: new Date(),
+    updatedBy: userId,
+  });
 
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
-    taskIds: updated.taskIds || []
+    taskIds: updated.taskIds || [],
+    mappedStatus: updated.mappedStatus || null,
   });
 };
 
@@ -266,6 +319,10 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
   if (fromStage.teamId !== toStage.teamId) {
     throw new Error('STAGES_FROM_DIFFERENT_TEAMS');
   }
+
+  if (fromStage.chartId !== toStage.chartId) {
+    throw new Error('STAGES_FROM_DIFFERENT_CHARTS');
+  }
   
   await assertStageTeamAccess(
     fromStage.teamId,
@@ -278,6 +335,8 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
   if (toStage.wipLimit !== null && toStageTaskCount >= toStage.wipLimit) {
     throw new Error('DESTINATION_WIP_LIMIT_REACHED');
   }
+
+  const task = await assertTaskCanMove(taskId, fromStage, toStage);
   
   // Remover de etapa origen y agregar a etapa destino
   const [, updatedToStage] = await Promise.all([
@@ -285,8 +344,14 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
     stagesRepository.addTask(toStageId, taskId),
   ]);
 
-  // Actualizar stageId en la tarea
-  await tasksRepository.updateTask(taskId, { stageId: toStageId, updatedAt: new Date() });
+  // Actualizar stageId y status logico si la etapa destino lo define
+  const taskUpdate = {
+    stageId: toStageId,
+    ...buildMappedStatusUpdate(task, toStage, userId),
+    updatedAt: new Date(),
+    updatedBy: userId,
+  };
+  const updatedTask = await tasksRepository.updateTask(taskId, taskUpdate);
 
   const fromUpdatedTaskIds = (fromStage.taskIds || []).filter(id => id !== taskId);
   const toUpdatedTaskIds = [...(toStage.taskIds || []), taskId];
@@ -300,7 +365,12 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
       id: toStageId,
       taskIds: toUpdatedTaskIds,
       wipLimitReached: updatedToStage.wipLimit !== null && toUpdatedTaskIds.length >= updatedToStage.wipLimit
-    }
+    },
+    task: {
+      id: updatedTask.id,
+      stageId: updatedTask.stageId,
+      status: updatedTask.status,
+    },
   };
 };
 
@@ -332,21 +402,15 @@ export const deleteStage = async (stageId, userId) => {
 
 //CREAR ETAPAS POR DEFECTO PARA NUEVO CHART
 export const createDefaultStages = async (chartId, teamId, userId) => {
-  const defaultStages = [
-    { name: 'To Do', wipLimit: null },
-    { name: 'In Progress', wipLimit: 5 },
-    { name: 'Review', wipLimit: 3 },
-    { name: 'Done', wipLimit: null }
-  ];
-  
   const createdStages = [];
   
-  for (const stageData of defaultStages) {
+  for (const stageData of DEFAULT_STAGES) {
     const stage = await createStage({
       name: stageData.name,
       teamId: teamId,
       chartId: chartId,
       wipLimit: stageData.wipLimit,
+      mappedStatus: stageData.mappedStatus,
       taskIds: []
     }, userId);
     
