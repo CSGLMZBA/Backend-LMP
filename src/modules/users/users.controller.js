@@ -225,6 +225,38 @@ try {
     return errorResponse(res, 'Error retrieving user');
   }
 };
+export const getByUserName = async (req, res) => {
+try {
+    const userName = req.validatedData.userName;
+    
+    const user = await usersService.getByUserName(userName);
+    return successResponse(
+      res,
+      'User retrieved',
+      user
+    );
+  } catch (error) {
+    if (error.message === 'USER_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'User not found',
+        'USER_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'UNAUTHORIZED') {
+      return errorResponse(
+        res,
+        'You do not have permission to view this user',
+        'UNAUTHORIZED',
+        [],
+        403
+      );
+    }
+    return errorResponse(res, 'Error retrieving user');
+  }
+};
 
 export const unlockUser = async (req, res) => {
   try {

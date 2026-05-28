@@ -12,6 +12,9 @@ export const usersSchema = {
     password: z.string().min(6),
     active: z.boolean().optional(),
   }),
+  getByUsername: z.object({
+    userName: z.string().min(3)
+  }),
   getParams: z.object({
     userId: z.string().min(1),
   }),

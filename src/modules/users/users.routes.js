@@ -8,7 +8,12 @@ import { usersSchema } from './users.schema.js';
 
 
 const router = Router();
+router.use(authMiddleware(0));
 
+router.get(
+  '/',
+  validate(usersSchema.getByUsername), usersController.getByUserName
+);
 router.use(authMiddleware(3));
 router.get(
   '/',

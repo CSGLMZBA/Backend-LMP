@@ -14,7 +14,14 @@ const removeSensitiveFields = (data) => {
     ? data.map(sanitize)
     : sanitize(data);
 };
+const removeSensitiveFieldsForNonAdmins = (data) => {
+  if (!data) return data;
+  const sanitize = ({ passwordHash, tokenVersion, loginAttempts, isLocked, ...user }) => user;
 
+  return Array.isArray(data)
+    ? data.map(sanitize)
+    : sanitize(data);
+};
 export const postUser = async (data) => {
   let existingUser = await usersRepository.findByEmailActive(data.email);
 
@@ -79,6 +86,15 @@ export const getUserById = async (userId) => {
   }
   
   return removeSensitiveFields(user);
+};
+export const getByUserName = async (userName) => {
+
+  const user = await usersRepository.findByUserNameActive(userName);
+  if (!user) {
+    throw new Error('USER_NOT_FOUND');
+  }
+  
+  return removeSensitiveFieldsForNonAdmins(user);
 };
 
 export const getUsers = async () => {
