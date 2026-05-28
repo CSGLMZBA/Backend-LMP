@@ -3,6 +3,7 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const createTeam = async (req, res) => {
   try {
@@ -11,6 +12,17 @@ export const createTeam = async (req, res) => {
       req.validatedData,
       userId
     );
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'team',
+      entityId: team.id,
+      userId,
+      teamId: team.id,
+      details: {
+        name: team.name,
+      },
+    });
 
     return successResponse(
       res,
@@ -80,6 +92,19 @@ export const updateTeam = async (req, res) => {
       req.user.id
     );
 
+    await recordAudit({
+      action: 'update',
+      entityType: 'team',
+      entityId: team.id,
+      userId: req.user.id,
+      teamId: team.id,
+      details: {
+        fields: Object.keys(req.validatedData)
+          .filter((field) => field !== 'password'),
+        changedPassword: Boolean(req.validatedData.password),
+      },
+    });
+
     return successResponse(
       res,
       'Team updated successfully',
@@ -119,6 +144,17 @@ export const archiveTeam = async (req, res) => {
       req.params.teamId,
       req.user.id
     );
+
+    await recordAudit({
+      action: 'archive',
+      entityType: 'team',
+      entityId: team.id,
+      userId: req.user.id,
+      teamId: team.id,
+      details: {
+        status: team.status,
+      },
+    });
 
     return successResponse(
       res,
@@ -170,6 +206,18 @@ export const joinTeam = async (req, res) => {
       req.user.id,
       req.validatedData.password
     );
+
+    await recordAudit({
+      action: 'join',
+      entityType: 'team_member',
+      entityId: member.id,
+      userId: req.user.id,
+      teamId: req.params.teamId,
+      details: {
+        joinedUserId: req.user.id,
+        role: member.role,
+      },
+    });
 
     return successResponse(
       res,
@@ -267,6 +315,18 @@ export const addTeamMember = async (req, res) => {
       req.user.id
     );
 
+    await recordAudit({
+      action: 'add_member',
+      entityType: 'team_member',
+      entityId: member.id,
+      userId: req.user.id,
+      teamId: req.params.teamId,
+      details: {
+        addedUserId: member.userId,
+        role: member.role,
+      },
+    });
+
     return successResponse(
       res,
       'Team member added',
@@ -326,6 +386,18 @@ export const updateTeamMemberRole = async (req, res) => {
       req.validatedData.role,
       req.user.id
     );
+
+    await recordAudit({
+      action: 'change_member_role',
+      entityType: 'team_member',
+      entityId: member.id,
+      userId: req.user.id,
+      teamId: req.params.teamId,
+      details: {
+        targetUserId: member.userId,
+        role: member.role,
+      },
+    });
 
     return successResponse(
       res,
@@ -387,6 +459,18 @@ export const removeTeamMember = async (req, res) => {
       req.params.userId,
       req.user.id
     );
+
+    await recordAudit({
+      action: 'remove_member',
+      entityType: 'team_member',
+      entityId: result.memberId,
+      userId: req.user.id,
+      teamId: req.params.teamId,
+      details: {
+        removedUserId: result.userId,
+        role: result.role,
+      },
+    });
 
     return successResponse(
       res,

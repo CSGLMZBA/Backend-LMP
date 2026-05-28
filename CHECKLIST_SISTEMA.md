@@ -225,21 +225,25 @@ Falta:
 - Archivar/eliminar equipo mediante soft archive.
 - Cambiar rol de miembro.
 - Evitar remover o degradar al ultimo `OWNER`.
+- Parametros validados en rutas de equipos.
+- Solo usuarios globales `user`/`admin` pueden crear equipos.
+- Auditoria de acciones importantes de equipos:
+  - create team
+  - update team
+  - archive team
+  - join team
+  - add member
+  - remove member
+  - change member role
 - Permisos por `team_members`.
 - Ya no dependemos de `teams.members`.
 
 ### Falta
 
-- Validar parametros en rutas de equipos.
-- Definir si `CLIENT` puede crear equipo o solo `user/admin`.
-- Auditoria de acciones importantes:
-  - create team
-  - update team
-  - delete/archive team
-  - join team
-  - add member
-  - remove member
-  - change member role
+- No hay pendientes funcionales criticos del Bloque 2.
+- Pendiente transversal:
+  - Probar manualmente endpoints.
+  - Agregar requests a Postman/Insomnia.
 
 ### Tareas Pequenas
 
@@ -252,8 +256,8 @@ Falta:
   - Probar que no se pueda degradar al ultimo `OWNER`.
   - Probar que no se pueda remover al ultimo `OWNER`.
 - Persona C:
-  - Definir permisos globales para crear equipos.
-  - Agregar auditoria de equipos.
+  - Probar que `client` no pueda crear equipos.
+  - Revisar eventos de auditoria generados por equipos.
 
 ---
 

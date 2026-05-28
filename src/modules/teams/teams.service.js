@@ -249,5 +249,11 @@ export const removeTeamMember = async (teamId, userId, removedBy) => {
 
   await teamsRepository.deleteTeamMember(member.id);
 
-  return { removed: true, teamId, userId };
+  return {
+    removed: true,
+    memberId: member.id,
+    teamId,
+    userId,
+    role: member.role,
+  };
 };

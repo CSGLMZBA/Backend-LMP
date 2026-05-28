@@ -13,6 +13,14 @@ router.use(authMiddleware());
 // GET /api/teams/myTeams Get all teams that the current user is in
 router.get('/', teamsController.getMyTeams);
 
+// POST /api/teams Create a new team. Only global user/admin can create teams.
+router.post(
+  '/',
+  authMiddleware(2),
+  validate(teamsSchema.create),
+  teamsController.createTeam
+);
+
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
 router.get(
   '/:teamId',
@@ -65,9 +73,5 @@ router.delete(
   validate(teamsSchema.teamMemberParamsSchema, 'params'),
   teamsController.removeTeamMember
 );
-
-router.use(authMiddleware(2));
-// POST /api/teams/create Create a new team
-router.post('/', validate(teamsSchema.create), teamsController.createTeam);
 
 export default router;
