@@ -11,6 +11,7 @@ import auditRoutes from '../modules/audit/audit.routes.js'
 import chartsRoutes from '../modules/charts/charts.routes.js';
 import permissionsRoutes from '../modules/permissions/permissions.routes.js';
 import notificationsRoutes from '../modules/notifications/notifications.routes.js';
+import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
 
 const router = Router();
 
@@ -29,6 +30,7 @@ router.use('/auth', authRoutes);
 router.use('/teams', teamsRoutes);
 router.use('/roles', rolesRoutes);
 router.use('/permissions', permissionsRoutes);
+router.use('/dashboard', dashboardRoutes);
 // Add routes for tasks
 router.use('/tasks', tasksRoutes);
 router.use('/users', usersRoutes);

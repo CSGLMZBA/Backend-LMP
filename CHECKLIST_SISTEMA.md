@@ -77,12 +77,13 @@ Ya cubiertas:
 - `PUT /api/roles/:id`
 - `DELETE /api/roles/:id`
 - `GET /api/permissions`
+- `GET /api/dashboard/summary`
 - `GET /api/audit`
 - `GET /api/health`
 
 Falta:
 
-- `GET /api/dashboard/summary`
+- No hay pendientes criticos de APIs comunes obligatorias.
 
 ### APIs Minimas de TaskFlow
 
@@ -92,13 +93,13 @@ Ya cubiertas o parcialmente cubiertas:
 - `/api/tasks` CRUD.
 - `/api/tasks/:id/status`.
 - `/api/tasks/:id/assign`.
+- Dashboard de avance por proyecto mediante `GET /api/dashboard/summary`.
 
 Falta:
 
 - `/api/tasks/:id/comments`
 - `/api/notifications`
 - `/api/notifications/read-all`
-- Dashboard de avance por proyecto.
 
 ### Seguridad Minima
 
@@ -287,11 +288,21 @@ Falta:
   - `chart.teamId === task.teamId`
   - `chart.projectId === task.projectId`
   - `stage.chartId === task.chartId`
+- Endpoint global de dashboard/resumen:
+  - `GET /api/dashboard/summary`
+- Resumen global autenticado:
+  - total de equipos accesibles
+  - proyectos por status
+  - tareas por status
+  - tareas por prioridad
+  - tareas completadas
+  - tareas bloqueadas
+  - tareas vencidas
+  - tareas asignadas al usuario
+  - resumen por proyecto
 
 ### Falta Importante
 
-- Endpoint global de dashboard/resumen:
-  - `GET /api/dashboard/summary`
 - Auditoria de proyectos.
 - Filtros o busqueda basica de proyectos, si aplica en frontend.
 
@@ -307,8 +318,8 @@ Falta:
   - Definir filtros/busqueda de proyectos que necesitara el frontend.
   - Implementar query params si hacen falta.
 - Persona C:
-  - Crear `GET /api/dashboard/summary`.
-  - Decidir si el dashboard global vive solo en bloque 4 o se adelanta.
+  - Probar manualmente `GET /api/dashboard/summary`.
+  - Ajustar metricas si el frontend necesita otro formato.
 
 ---
 
@@ -331,9 +342,6 @@ Falta:
 - Orden de columnas/stages.
 - Evitar stages default duplicadas.
 - Validar mejor que cada stage pertenece al chart correcto.
-- Dashboard de avance por proyecto.
-- Endpoint obligatorio:
-  - `GET /api/dashboard/summary`
 - Definir si el frontend movera tareas por:
   - `/stages/tasks/move`
   - o update de task.
@@ -350,14 +358,8 @@ Falta:
   - Crear endpoint para reordenar stages.
   - Validar orden unico dentro del chart.
 - Persona C:
-  - Crear modulo `dashboard`.
-  - Crear `GET /api/dashboard/summary`.
-  - Incluir resumen por proyecto:
-    - total tareas
-    - tareas por estado
-    - tareas por prioridad
-    - tareas completadas
-    - tareas bloqueadas
+  - Probar dashboard con datos reales de proyecto/chart/task.
+  - Ajustar campos para las tarjetas o graficas del frontend.
   - Agregar auditoria donde aplique.
 
 ---
@@ -542,16 +544,11 @@ Para no pisarse:
 1. Corregir sincronizacion de `task.stageId` con `stage.taskIds`.
 2. Crear comentarios de tareas.
 3. Crear notificaciones.
-4. Crear `GET /api/dashboard/summary`.
-5. Completar equipos:
-   - update
-   - cambio de rol
-   - archive/delete
-6. Completar charts/stages:
+4. Completar charts/stages:
    - delete chart
    - orden de stages
    - evitar stages default duplicadas
-7. Preparar entregables:
+5. Preparar entregables:
    - Postman/Insomnia
    - pruebas manuales
    - arquitectura
