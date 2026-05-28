@@ -26,6 +26,13 @@ router.get(
   stagesController.getStagesByChart
 );
 
+router.patch(
+  '/chart/:chartId/team/:teamId/order',
+  validate(stagesSchema.getByChartParams, 'params'),
+  validate(stagesSchema.reorder),
+  stagesController.reorderStages
+);
+
 // Crear etapas por defecto para un nuevo chart
 router.post(
   '/default',

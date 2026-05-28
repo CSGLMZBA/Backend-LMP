@@ -4,10 +4,10 @@ import * as tasksRepository from '../Task/task.repository.js';
 import * as chartsRepository from '../charts/charts.repository.js';
 
 const DEFAULT_STAGES = [
-  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING' },
-  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS' },
-  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW' },
-  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED' },
+  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING', order: 0 },
+  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS', order: 1 },
+  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW', order: 2 },
+  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED', order: 3 },
 ];
 
 // Helper para remover campos sensibles (si los hubiera)
@@ -44,10 +44,35 @@ const mapStage = (stage) => removeSensitiveFields({
   chartId: stage.chartId,
   taskIds: stage.taskIds || [],
   wipLimit: stage.wipLimit,
+  order: Number.isInteger(stage.order) ? stage.order : null,
   mappedStatus: stage.mappedStatus || null,
   createdBy: stage.createdBy,
   createdAt: stage.createdAt,
 });
+
+const getNextStageOrder = async (chartId, teamId) => {
+  const stages = await stagesRepository.findByChartId(chartId, teamId);
+  const maxOrder = stages.reduce((max, stage) => (
+    Number.isInteger(stage.order) && stage.order > max ? stage.order : max
+  ), -1);
+
+  return maxOrder + 1;
+};
+
+const assertOrderAvailable = async (chartId, teamId, order, stageId = null) => {
+  if (order === undefined) {
+    return;
+  }
+
+  const stages = await stagesRepository.findByChartId(chartId, teamId);
+  const duplicated = stages.some((stage) =>
+    stage.id !== stageId && stage.order === order
+  );
+
+  if (duplicated) {
+    throw new Error('STAGE_ORDER_ALREADY_EXISTS');
+  }
+};
 
 const buildMappedStatusUpdate = (task, stage, userId) => {
   if (!stage.mappedStatus || task.status === stage.mappedStatus) {
@@ -121,6 +146,9 @@ export const createStage = async (data, userId) => {
     throw new Error('CHART_TEAM_MISMATCH');
   }
   
+  const order = data.order ?? await getNextStageOrder(data.chartId, data.teamId);
+  await assertOrderAvailable(data.chartId, data.teamId, order);
+
   // Crear objeto de etapa
   const stageData = {
     name: data.name.trim(),
@@ -128,6 +156,7 @@ export const createStage = async (data, userId) => {
     chartId: data.chartId,
     taskIds: data.taskIds || [],
     wipLimit: data.wipLimit || null,
+    order,
     mappedStatus: data.mappedStatus || null,
     createdBy: userId,
     createdAt: new Date(),
@@ -199,6 +228,10 @@ export const updateStage = async (stageId, payload, userId) => {
       throw new Error('WIP_LIMIT_INVALID');
     }
   }
+
+  if (data.order !== undefined) {
+    await assertOrderAvailable(stage.chartId, stage.teamId, data.order, stageId);
+  }
   
   if (data.isArchived !== undefined) {
     data.isArchived = Boolean(data.isArchived);
@@ -210,6 +243,49 @@ export const updateStage = async (stageId, payload, userId) => {
   const updated = await stagesRepository.update(stageId, data);
   
   return mapStage(updated);
+};
+
+export const reorderStages = async (chartId, teamId, stageIds, userId) => {
+  await assertStageTeamAccess(
+    teamId,
+    userId,
+    'UNAUTHORIZED_STAGE_UPDATE'
+  );
+
+  const chart = await chartsRepository.getChartById(chartId);
+
+  if (!chart) {
+    throw new Error('CHART_NOT_FOUND');
+  }
+
+  if (chart.teamId !== teamId) {
+    throw new Error('CHART_TEAM_MISMATCH');
+  }
+
+  const stages = await stagesRepository.findByChartId(chartId, teamId);
+  const existingIds = new Set(stages.map((stage) => stage.id));
+  const requestedIds = new Set(stageIds);
+
+  if (
+    requestedIds.size !== stageIds.length ||
+    requestedIds.size !== existingIds.size ||
+    !stageIds.every((stageId) => existingIds.has(stageId))
+  ) {
+    throw new Error('STAGE_ORDER_INVALID');
+  }
+
+  const updatedStages = await Promise.all(
+    stageIds.map((stageId, index) =>
+      stagesRepository.update(stageId, {
+        order: index,
+        updatedAt: new Date(),
+      })
+    )
+  );
+
+  return updatedStages
+    .map(mapStage)
+    .sort((a, b) => a.order - b.order);
 };
 
 // AGREGAR TAREA A ETAPA
@@ -265,6 +341,7 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
     name: updated.name,
     taskIds: updated.taskIds || [],
     wipLimit: updated.wipLimit,
+    order: Number.isInteger(updated.order) ? updated.order : null,
     mappedStatus: updated.mappedStatus || null,
   });
 };
@@ -301,6 +378,7 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
     id: updated.id,
     name: updated.name,
     taskIds: updated.taskIds || [],
+    order: Number.isInteger(updated.order) ? updated.order : null,
     mappedStatus: updated.mappedStatus || null,
   });
 };
@@ -402,6 +480,12 @@ export const deleteStage = async (stageId, userId) => {
 
 //CREAR ETAPAS POR DEFECTO PARA NUEVO CHART
 export const createDefaultStages = async (chartId, teamId, userId) => {
+  const existingStages = await stagesRepository.findByChartId(chartId, teamId);
+
+  if (existingStages.length > 0) {
+    throw new Error('DEFAULT_STAGES_ALREADY_EXIST');
+  }
+
   const createdStages = [];
   
   for (const stageData of DEFAULT_STAGES) {
@@ -410,6 +494,7 @@ export const createDefaultStages = async (chartId, teamId, userId) => {
       teamId: teamId,
       chartId: chartId,
       wipLimit: stageData.wipLimit,
+      order: stageData.order,
       mappedStatus: stageData.mappedStatus,
       taskIds: []
     }, userId);

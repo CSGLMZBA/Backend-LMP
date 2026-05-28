@@ -335,12 +335,16 @@ Falta:
 - Crear stages default.
 - Mover tareas entre stages.
 - Sincronizacion basica de `chart.stageIds` al crear/eliminar stages.
+- Campo `order` en stages.
+- Listado de stages ordenado por `order`.
+- Endpoint para reordenar columnas:
+  - `PATCH /api/stages/chart/:chartId/team/:teamId/order`
+- Validacion de orden unico dentro del chart.
+- Proteccion para evitar stages default duplicadas.
 
 ### Falta
 
 - Borrar/archivar chart.
-- Orden de columnas/stages.
-- Evitar stages default duplicadas.
 - Validar mejor que cada stage pertenece al chart correcto.
 - Definir si el frontend movera tareas por:
   - `/stages/tasks/move`
@@ -354,9 +358,9 @@ Falta:
   - Validar permisos por equipo/proyecto.
   - Decidir que pasa con sus stages.
 - Persona B:
-  - Agregar campo `order` en stages.
-  - Crear endpoint para reordenar stages.
-  - Validar orden unico dentro del chart.
+  - Probar reordenamiento de stages.
+  - Probar que `POST /stages/default` falle si ya hay stages activos.
+  - Documentar request/response del reordenamiento.
 - Persona C:
   - Probar dashboard con datos reales de proyecto/chart/task.
   - Ajustar campos para las tarjetas o graficas del frontend.

@@ -10,6 +10,17 @@ const serializeDoc = (doc) => ({
   ...doc.data()
 });
 
+const sortByOrder = (stages) => [...stages].sort((a, b) => {
+  const orderA = Number.isInteger(a.order) ? a.order : Number.MAX_SAFE_INTEGER;
+  const orderB = Number.isInteger(b.order) ? b.order : Number.MAX_SAFE_INTEGER;
+
+  if (orderA !== orderB) {
+    return orderA - orderB;
+  }
+
+  return String(a.name || '').localeCompare(String(b.name || ''));
+});
+
 export const stagesRepository = {
   // CREAR ETAPA
   async create(stageData) {
@@ -48,7 +59,7 @@ export const stagesRepository = {
       return [];
     }
 
-    return snapshot.docs.map(doc => serializeDoc(doc));
+    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
   },
 
   // OBTENER ETAPAS POR TEAM ID
@@ -64,7 +75,7 @@ export const stagesRepository = {
       return [];
     }
 
-    return snapshot.docs.map(doc => serializeDoc(doc));
+    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
   },
 
   // ACTUALIZAR ETAPA
@@ -198,6 +209,6 @@ export const stagesRepository = {
       return [];
     }
 
-    return snapshot.docs.map(doc => serializeDoc(doc));
+    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
   }
 };

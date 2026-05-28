@@ -13,6 +13,7 @@ export const stagesSchema = {
     chartId: z.string().min(1, 'Chart ID is required'),
     taskIds: z.array(z.string()).optional().default([]),
     wipLimit: z.number().int().min(0, 'WIP limit must be 0 or greater').nullable().optional().default(null),
+    order: z.number().int().min(0, 'Order must be 0 or greater').optional(),
     mappedStatus: mappedStatusSchema.default(null),
   }),
 
@@ -35,8 +36,14 @@ export const stagesSchema = {
   update: z.object({
     name: z.string().min(1, 'Stage name is required').max(100, 'Stage name must be less than 100 characters').optional(),
     wipLimit: z.number().int().min(0, 'WIP limit must be 0 or greater').nullable().optional(),
+    order: z.number().int().min(0, 'Order must be 0 or greater').optional(),
     mappedStatus: mappedStatusSchema,
     isArchived: z.boolean().optional(),
+  }),
+
+  reorder: z.object({
+    stageIds: z.array(z.string().min(1, 'Stage ID is required'))
+      .min(1, 'At least one stage ID is required'),
   }),
 
   // AGREGAR TAREA A ETAPA 
@@ -82,10 +89,10 @@ export const stagesSchema = {
 
 // Constantes útiles
 export const DEFAULT_STAGES = [
-  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING' },
-  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS' },
-  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW' },
-  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED' }
+  { name: 'To Do', wipLimit: null, mappedStatus: 'PENDING', order: 0 },
+  { name: 'In Progress', wipLimit: 5, mappedStatus: 'IN_PROGRESS', order: 1 },
+  { name: 'Review', wipLimit: 3, mappedStatus: 'REVIEW', order: 2 },
+  { name: 'Done', wipLimit: null, mappedStatus: 'COMPLETED', order: 3 }
 ];
 
 export const STAGE_ERRORS = {
@@ -101,6 +108,9 @@ export const STAGE_ERRORS = {
   WIP_LIMIT_REACHED: 'Work in progress limit reached for this stage',
   DESTINATION_WIP_LIMIT_REACHED: 'Work in progress limit reached in destination stage',
   WIP_LIMIT_INVALID: 'WIP limit must be 0 or greater',
+  STAGE_ORDER_ALREADY_EXISTS: 'Stage order already exists in this chart',
+  STAGE_ORDER_INVALID: 'Stage order list must include every active stage exactly once',
+  DEFAULT_STAGES_ALREADY_EXIST: 'Default stages already exist for this chart',
   TASK_ALREADY_IN_STAGE: 'Task is already in this stage',
   TASK_NOT_IN_STAGE: 'Task is not in this stage',
   STAGE_HAS_TASKS: 'Cannot delete stage that has tasks',

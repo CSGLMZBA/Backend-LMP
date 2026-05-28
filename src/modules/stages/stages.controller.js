@@ -94,6 +94,15 @@ export const createStage = async (req, res) => {
         404
       );
     }
+    if (error.message === 'STAGE_ORDER_ALREADY_EXISTS') {
+      return errorResponse(
+        res,
+        'Stage order already exists in this chart',
+        'STAGE_ORDER_ALREADY_EXISTS',
+        [],
+        400
+      );
+    }
     if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
       return errorResponse(
         res,
@@ -245,6 +254,15 @@ export const updateStage = async (req, res) => {
         400
       );
     }
+    if (error.message === 'STAGE_ORDER_ALREADY_EXISTS') {
+      return errorResponse(
+        res,
+        'Stage order already exists in this chart',
+        'STAGE_ORDER_ALREADY_EXISTS',
+        [],
+        400
+      );
+    }
     if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
       return errorResponse(
         res,
@@ -257,6 +275,80 @@ export const updateStage = async (req, res) => {
     return errorResponse(
       res,
       'Error updating stage',
+      'INTERNAL_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
+
+export const reorderStages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { chartId, teamId } = req.params;
+    const { stageIds } = req.validatedData;
+
+    const stages = await stagesService.reorderStages(
+      chartId,
+      teamId,
+      stageIds,
+      userId
+    );
+
+    return successResponse(
+      res,
+      'Stages reordered successfully',
+      stages
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'CHART_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Chart not found',
+        'CHART_NOT_FOUND',
+        [],
+        404
+      );
+    }
+    if (error.message === 'CHART_TEAM_MISMATCH') {
+      return errorResponse(
+        res,
+        'Chart does not belong to this team',
+        'CHART_TEAM_MISMATCH',
+        [],
+        400
+      );
+    }
+    if (error.message === 'STAGE_ORDER_INVALID') {
+      return errorResponse(
+        res,
+        'Stage order list must include every active stage exactly once',
+        'STAGE_ORDER_INVALID',
+        [],
+        400
+      );
+    }
+    if (error.message === 'UNAUTHORIZED_STAGE_UPDATE') {
+      return errorResponse(
+        res,
+        'You do not have permission to reorder stages',
+        'UNAUTHORIZED_STAGE_UPDATE',
+        [],
+        403
+      );
+    }
+    return errorResponse(
+      res,
+      'Error reordering stages',
       'INTERNAL_ERROR',
       [error.message],
       500
@@ -525,6 +617,15 @@ export const createDefaultStages = async (req, res) => {
         404
       );
     }
+    if (error.message === 'STAGE_ORDER_ALREADY_EXISTS') {
+      return errorResponse(
+        res,
+        'Stage order already exists in this chart',
+        'STAGE_ORDER_ALREADY_EXISTS',
+        [],
+        400
+      );
+    }
     if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
       return errorResponse(
         res,
@@ -548,6 +649,15 @@ export const createDefaultStages = async (req, res) => {
         res,
         'Chart does not belong to this team',
         'CHART_TEAM_MISMATCH',
+        [],
+        400
+      );
+    }
+    if (error.message === 'DEFAULT_STAGES_ALREADY_EXIST') {
+      return errorResponse(
+        res,
+        'Default stages already exist for this chart',
+        'DEFAULT_STAGES_ALREADY_EXIST',
         [],
         400
       );
