@@ -18,7 +18,7 @@ const removeSensitiveFields = (data) => {
 const MAX_LOGIN_ATTEMPTS = 5;
 
 export const register = async (data) => {
-  let existingUser = await userRepository.findByEmailActive(data.email);
+  let existingUser = await userRepository.findByEmailActive(data.email.toLowerCase());
 
   if (existingUser) {
     throw new Error('EMAIL_ALREADY_IN_USE');
@@ -38,7 +38,7 @@ export const register = async (data) => {
   const user = await userRepository.create({
     displayName: data.displayName,
     userName: data.userName,
-    email: data.email,
+    email: data.email.toLowerCase(),
     passwordHash: hashedPassword,
     role: data.role || 'user',
     status: "offline",
@@ -53,7 +53,7 @@ export const register = async (data) => {
 
 export const login = async (data) => {
 
-  const user = await userRepository.findByEmailActive(data.email);
+  const user = await userRepository.findByEmailActive(data.email.toLowerCase());
   
   if (!user) {
     throw new Error('INVALID_CREDENTIALS');

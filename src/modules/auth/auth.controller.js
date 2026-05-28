@@ -29,9 +29,9 @@ export const register = async (req, res) => {
     const notifData = 
     {
       title: "profile Created",
-      body: `${user.userName} was created at ${user.createdAt}`,
+      body: `${user.userName} was created`,
       type: 2,
-    }
+    };
     await notificationsController.createNotificationMass(notifData,[user.id]);
     return successResponse(
       res,
