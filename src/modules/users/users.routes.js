@@ -11,7 +11,7 @@ const router = Router();
 router.use(authMiddleware(0));
 
 router.get(
-  '/',
+  '/search',
   validate(usersSchema.getByUsername), usersController.getByUserName
 );
 router.use(authMiddleware(3));
