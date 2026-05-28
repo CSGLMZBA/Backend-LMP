@@ -258,6 +258,16 @@ try {
   }
 };
 
+export const getBasicUsers = async (req, res) => {
+  try {
+    const users = await usersService.getUsers();
+    const basic = users.map(({ id, displayName, userName }) => ({ id, displayName, userName }));
+    return successResponse(res, 'Users retrieved', basic);
+  } catch {
+    return successResponse(res, 'Users retrieved', []);
+  }
+};
+
 export const unlockUser = async (req, res) => {
   try {
     const { userId } = req.params;

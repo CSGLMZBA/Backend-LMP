@@ -12,8 +12,9 @@ router.use(authMiddleware(0));
 
 router.get(
   '/search',
-  validate(usersSchema.getByUsername), usersController.getByUserName
+  validate(usersSchema.getByUsername,'query'), usersController.getByUserName
 );
+router.get('/list', usersController.getBasicUsers);
 router.use(authMiddleware(3));
 router.get(
   '/',
