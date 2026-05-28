@@ -2,6 +2,7 @@ import { db } from '../../config/firebase.js';
 
 const tasksCollectionName = 'tasks';
 const teamMembersCollectionName = 'team_members';
+const teamsCollectionName = 'teams';
 
 export const createTask = async (taskData) => {
   const tasksRef = db.collection(tasksCollectionName);
@@ -131,6 +132,12 @@ export const softDeleteTask = async (taskId) => {
 
 // Verificaciones
 export const verifyUserInTeam = async (teamId, userId) => {
+  const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
+
+  if (!teamDoc.exists || teamDoc.data().status === 'ARCHIVED') {
+    return false;
+  }
+
   const snapshot = await db
     .collection(teamMembersCollectionName)
     .where('teamId', '==', teamId)
@@ -150,6 +157,12 @@ export const verifyUsersInTeam = async (teamId, userIds) => {
 };
 
 export const isUserAdminInTeam = async (teamId, userId) => {
+  const teamDoc = await db.collection(teamsCollectionName).doc(teamId).get();
+
+  if (!teamDoc.exists || teamDoc.data().status === 'ARCHIVED') {
+    return false;
+  }
+
   const snapshot = await db
     .collection(teamMembersCollectionName)
     .where('teamId', '==', teamId)

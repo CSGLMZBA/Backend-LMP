@@ -221,13 +221,13 @@ Falta:
 - Listar miembros.
 - Agregar miembro con rol de equipo.
 - Remover miembro.
+- Actualizar equipo.
+- Archivar/eliminar equipo mediante soft archive.
 - Permisos por `team_members`.
 - Ya no dependemos de `teams.members`.
 
 ### Falta
 
-- Actualizar equipo.
-- Archivar/eliminar equipo.
 - Cambiar rol de miembro.
 - Validar parametros en rutas de equipos.
 - Evitar remover al ultimo `OWNER`.
@@ -244,9 +244,9 @@ Falta:
 ### Tareas Pequenas
 
 - Persona A:
-  - Crear `PATCH /teams/:teamId`.
-  - Crear schema de update de equipo.
-  - Validar permisos de `OWNER`/`MANAGER`.
+  - Probar manualmente `PATCH /teams/:teamId`.
+  - Probar manualmente `DELETE /teams/:teamId`.
+  - Documentar request/response de update y archive.
 - Persona B:
   - Crear `PATCH /teams/:teamId/members/:userId/role`.
   - Validar roles permitidos.

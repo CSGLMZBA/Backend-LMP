@@ -14,39 +14,53 @@ router.use(authMiddleware());
 router.get('/', teamsController.getMyTeams);
 
 // GET /api/teams/myTeams/:teamId Get specific team that the user is in
-router.get('/:teamId', teamsController.getTeam);
+router.get(
+  '/:teamId',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
+  teamsController.getTeam
+);
+
+router.patch(
+  '/:teamId',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
+  validate(teamsSchema.update),
+  teamsController.updateTeam
+);
+
+router.delete(
+  '/:teamId',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
+  teamsController.archiveTeam
+);
 
 router.post(
   '/:teamId/join',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
   validate(teamsSchema.joinTeamSchema),
   teamsController.joinTeam
 );
 
 router.get(
   '/:teamId/members',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
   teamsController.getTeamMembers
 );
 
 router.post(
   '/:teamId/members',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
   validate(teamsSchema.addTeamMemberSchema),
   teamsController.addTeamMember
 );
 
 router.delete(
   '/:teamId/members/:userId',
+  validate(teamsSchema.teamIdParamSchema, 'params'),
   teamsController.removeTeamMember
 );
 
 router.use(authMiddleware(2));
 // POST /api/teams/create Create a new team
 router.post('/', validate(teamsSchema.create), teamsController.createTeam);
-// TO DO:
-
-// PUT /api/teams/update/:teamId Update team
-// router.put('/update/:teamId', validate(updateTeamSchema), teamsController.updateTeam);
-
-// DELETE /api/teams/:teamId Delete team
-//router.delete('delete/:teamId', teamsController.deleteTeam);
 
 export default router;

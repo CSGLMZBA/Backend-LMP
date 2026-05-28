@@ -72,6 +72,97 @@ export const getTeam = async (req, res) => {
   }
 };
 
+export const updateTeam = async (req, res) => {
+  try {
+    const team = await teamsService.updateTeam(
+      req.params.teamId,
+      req.validatedData,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team updated successfully',
+      team
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to update this team',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error updating team');
+  }
+};
+
+export const archiveTeam = async (req, res) => {
+  try {
+    const team = await teamsService.archiveTeam(
+      req.params.teamId,
+      req.user.id
+    );
+
+    return successResponse(
+      res,
+      'Team archived successfully',
+      team
+    );
+  } catch (error) {
+    if (error.message === 'TEAM_NOT_FOUND') {
+      return errorResponse(
+        res,
+        'Team not found',
+        'TEAM_NOT_FOUND',
+        [],
+        404
+      );
+    }
+
+    if (error.message === 'TEAM_ALREADY_ARCHIVED') {
+      return errorResponse(
+        res,
+        'Team is already archived',
+        'TEAM_ALREADY_ARCHIVED',
+        [],
+        400
+      );
+    }
+
+    if (
+      error.message === 'UNAUTHORIZED_TEAM_ACCESS' ||
+      error.message === 'INSUFFICIENT_TEAM_ROLE'
+    ) {
+      return errorResponse(
+        res,
+        'You do not have permission to archive this team',
+        error.message,
+        [],
+        403
+      );
+    }
+
+    return errorResponse(res, 'Error archiving team');
+  }
+};
+
 export const joinTeam = async (req, res) => {
   try {
     const member = await teamsService.joinTeam(

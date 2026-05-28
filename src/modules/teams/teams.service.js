@@ -12,7 +12,7 @@ const removeSensitiveFields = (team) => {
 export const getTeamMembership = async (teamId, userId) => {
   const team = await teamsRepository.getTeamById(teamId);
 
-  if (!team) {
+  if (!team || team.status === 'ARCHIVED') {
     throw new Error('TEAM_NOT_FOUND');
   }
 
@@ -75,7 +75,7 @@ export const getTeamsByUser = async (userId) => {
   const teamsById = new Map();
   
   teamsByMembership
-    .filter(Boolean)
+    .filter((team) => team && team.status !== 'ARCHIVED')
     .forEach((team) => {
       teamsById.set(team.id, team);
     });
@@ -85,7 +85,7 @@ export const getTeamsByUser = async (userId) => {
 
 export const getTeamById = async (teamId, userId) => {
   const team = await teamsRepository.getTeamById(teamId);
-  if (!team) {
+  if (!team || team.status === 'ARCHIVED') {
     throw new Error('TEAM_NOT_FOUND');
   }
   
@@ -96,6 +96,56 @@ export const getTeamById = async (teamId, userId) => {
   }
   
   return removeSensitiveFields(team);
+};
+
+export const updateTeam = async (teamId, data, userId) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team || team.status === 'ARCHIVED') {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  await assertTeamRole(teamId, userId, ['OWNER', 'MANAGER']);
+
+  const updateData = {
+    updatedAt: new Date(),
+    updatedBy: userId,
+  };
+
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.description !== undefined) updateData.description = data.description;
+
+  if (data.password !== undefined) {
+    updateData.password = await bcrypt.hash(data.password, env.BCRYPT_SALT_ROUNDS);
+  }
+
+  const updatedTeam = await teamsRepository.updateTeam(teamId, updateData);
+
+  return removeSensitiveFields(updatedTeam);
+};
+
+export const archiveTeam = async (teamId, userId) => {
+  const team = await teamsRepository.getTeamById(teamId);
+
+  if (!team) {
+    throw new Error('TEAM_NOT_FOUND');
+  }
+
+  if (team.status === 'ARCHIVED') {
+    throw new Error('TEAM_ALREADY_ARCHIVED');
+  }
+
+  await assertTeamRole(teamId, userId, ['OWNER']);
+
+  const archivedTeam = await teamsRepository.updateTeam(teamId, {
+    status: 'ARCHIVED',
+    archivedAt: new Date(),
+    archivedBy: userId,
+    updatedAt: new Date(),
+    updatedBy: userId,
+  });
+
+  return removeSensitiveFields(archivedTeam);
 };
 
 export const joinTeam = async (teamId, userId, password) => {

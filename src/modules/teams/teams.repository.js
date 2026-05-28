@@ -9,6 +9,14 @@ export const createTeam = async (teamData) => {
   return { id: docRef.id, ...teamData };
 };
 
+export const updateTeam = async (teamId, data) => {
+  const teamRef = db.collection(teamsCollectionName).doc(teamId);
+  await teamRef.update(data);
+
+  const updatedDoc = await teamRef.get();
+  return { id: updatedDoc.id, ...updatedDoc.data() };
+};
+
 export const createTeamMember = async (data) => {
   const teamMembersCollection = db.collection(teamMembersCollectionName);
   const docRef = await teamMembersCollection.add(data);
