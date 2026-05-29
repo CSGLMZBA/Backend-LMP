@@ -13,11 +13,19 @@ export const createNotification = async (data) => {
 };
 
 export const getNotificationsForRecipient = async (recipientId) => {
+  const readNotifications = await notificationsRepository.readByRecipient(recipientId);
   const notifications = await notificationsRepository.getByRecipient(recipientId);
 
 
   return notifications;
 };
+export const readNotificationsForRecipient = async (recipientId) => {
+  const notifications = await notificationsRepository.getByRecipient(recipientId);
+
+
+  return notifications;
+};
+
 export const getNotificationById = async (notificationId,recipientId) => {
   const notification = await notificationsRepository.findById(notificationId);
   if (!notification) {

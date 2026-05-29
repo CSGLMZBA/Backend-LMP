@@ -9,6 +9,7 @@ const router = Router();
 router.use(authMiddleware(0));
 
 router.get('/', notificationsController.getNotifications);
+router.patch('/read-all', notificationsController.patchNotificationsAsRead);
 router.patch('/:notificationId/read', validate(notificationsSchema.notificationParams, 'params'), notificationsController.markAsRead);
 router.patch('/:notificationId/unread', validate(notificationsSchema.notificationParams, 'params'), notificationsController.markAsUnread);
 router.get('/:notificationId', validate(notificationsSchema.notificationParams, 'params'), notificationsController.getNotificationById);

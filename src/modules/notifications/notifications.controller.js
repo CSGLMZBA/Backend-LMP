@@ -19,6 +19,24 @@ export const getNotifications = async (req, res) => {
     );
   }
 };
+export const patchNotificationsAsRead = async (req, res) => {
+  try {
+    const notifications = await notificationsService.readNotificationsForRecipient(req.user.id);
+    return successResponse(
+      res,
+      'Notifications Read successfully',
+      notifications
+    );
+  } catch (error) {
+    return errorResponse(
+      res,
+      'Failed to read notifications',
+      'READ_NOTIFICATIONS_ERROR',
+      [error.message],
+      500
+    );
+  }
+};
 export const getNotificationById = async (req, res) => {
   try {
     const notification = await notificationsService.getNotificationById(req.params.notificationId,
