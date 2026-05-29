@@ -13,7 +13,7 @@ export const getNotifications = async (req, res) => {
     return errorResponse(
       res,
       'Failed to get notifications',
-      'NOTIFICATION_UNAUTHORIZED',
+      'GET_NOTIFICATIONS_ERROR',
       [error.message],
       500
     );
@@ -29,25 +29,15 @@ export const getNotificationById = async (req, res) => {
       notification
     );
   } catch (error) {
-    return errorResponse(
-      res,
-      'Failed to get notification',
-      'NOTIFICATION_UNAUTHORIZED',
-      [error.message],
-      500
-    );
+    if (error.message === 'NOTIFICATION_NOT_FOUND') {
+      return errorResponse(res, 'Notification not found', 'NOTIFICATION_NOT_FOUND', [], 404);
+    }
+    if (error.message === 'NOTIFICATION_UNAUTHORIZED') {
+      return errorResponse(res, 'Unauthorized', 'NOTIFICATION_UNAUTHORIZED', [], 403);
+    }
+    return errorResponse(res, 'Failed to get notification', 'GET_NOTIFICATION_ERROR', [error.message], 500);
   }
 };
-export const createNotificationMass = async (data, recipientIds) =>
-{
-    recipientIds.forEach(recipientId => {
-        createNotification(
-            {
-                ...data,
-                recipientId: recipientId
-            });
-    });
-}
 export const createNotification = async (data) => {
   try {
     const notification = await notificationsService.createNotification(data);
@@ -115,6 +105,12 @@ export const markAsUnread = async (req, res) => {
 
     return errorResponse(res, 'Failed to mark notification as unread', 'UPDATE_NOTIFICATION_ERROR', [error.message], 500);
   }
+};
+
+export const createNotificationMass = async (data, recipientIds) => {
+  recipientIds.forEach(recipientId => {
+    createNotification({ ...data, recipientId });
+  });
 };
 
 export const deleteNotification = async (req, res) => {

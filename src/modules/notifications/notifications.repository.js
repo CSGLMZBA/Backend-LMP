@@ -34,14 +34,15 @@ export const notificationsRepository = {
     const snapshot = await db
       .collection(notificationsCollectionName)
       .where('recipientId', '==', recipientId)
-      .orderBy('createdAt', 'desc')
       .get();
 
     if (snapshot.empty) {
       return [];
     }
 
-    return snapshot.docs.map(serializeDoc);
+    return snapshot.docs
+      .map(serializeDoc)
+      .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
   },
 
   async updateReadStatus(id, read) {
