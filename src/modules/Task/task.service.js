@@ -34,6 +34,7 @@ const mapTaskListItem = (task) => ({
   stageId: task.stageId,
   description: task.description,
   assignedUserIds: task.assignedUserIds,
+  workerIds: task.workerIds || [],
   priority: task.priority,
   status: task.status,
   startDate: task.startDate,
@@ -398,26 +399,45 @@ export const updateTaskStatus = async (taskId, newStatus, userId, comment = '') 
     updatedAt: new Date(),
     updatedBy: userId
   };
-  
-  if (newStatus === 'COMPLETED') {
+
+  // IN_PROGRESS → REVIEW: guardar trabajadores y limpiar asignados
+  if (task.status === 'IN_PROGRESS' && newStatus === 'REVIEW') {
+    const current = task.assignedUserIds || [];
+    const existing = task.workerIds || [];
+    updateData.workerIds = [...new Set([...existing, ...current])];
+    updateData.assignedUserIds = [];
+  }
+
+  // REVIEW → IN_PROGRESS: limpiar revisor, dejar que todos puedan asignarse
+  if (task.status === 'REVIEW' && newStatus === 'IN_PROGRESS') {
+    updateData.assignedUserIds = [];
+  }
+
+  // REVIEW → COMPLETED: combinar trabajadores + revisor como historial de la tarea
+  if (task.status === 'REVIEW' && newStatus === 'COMPLETED') {
+    const workers = task.workerIds || [];
+    const reviewer = task.assignedUserIds || [];
+    updateData.assignedUserIds = [...new Set([...workers, ...reviewer])];
     updateData.completedAt = new Date();
   }
-  
+
   const historyEntry = {
     status: newStatus,
     changedBy: userId,
     changedAt: new Date(),
     comment: comment || `Estado cambiado de ${task.status} a ${newStatus}`
   };
-  
+
   updateData.statusHistory = [...(task.statusHistory || []), historyEntry];
-  
+
   const updatedTask = await tasksRepository.updateTask(taskId, updateData);
-  
+
   return {
     id: updatedTask.id,
     status: updatedTask.status,
-    completedAt: updatedTask.completedAt
+    completedAt: updatedTask.completedAt,
+    assignedUserIds: updatedTask.assignedUserIds,
+    workerIds: updatedTask.workerIds || [],
   };
 };
 
