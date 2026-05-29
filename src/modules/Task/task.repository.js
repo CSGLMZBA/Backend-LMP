@@ -22,26 +22,22 @@ export const getTasksByTeamId = async (teamId) => {
   const tasksSnapshot = await db
     .collection(tasksCollectionName)
     .where('teamId', '==', teamId)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByProjectId = async (projectId) => {
-  const tasksSnapshot = await db
-    .collection(tasksCollectionName)
-    .where('projectId', '==', projectId)
-    .where('isDeleted', '!=', true)
-    .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const snapshot = await db
+  .collection(tasksCollectionName)
+  .where('projectId', '==', projectId)
+  .get();
+
+return snapshot.docs
+  .map(doc => ({ id: doc.id, ...doc.data() }))
+  .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByStageId = async (teamId, stageId) => {
@@ -49,26 +45,22 @@ export const getTasksByStageId = async (teamId, stageId) => {
     .collection(tasksCollectionName)
     .where('teamId', '==', teamId)
     .where('stageId', '==', stageId)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByUserId = async (userId) => {
   const tasksSnapshot = await db
     .collection(tasksCollectionName)
     .where('assignedUserIds', 'array-contains', userId)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByUserAndTeam = async (userId, teamId) => {
@@ -76,13 +68,11 @@ export const getTasksByUserAndTeam = async (userId, teamId) => {
     .collection(tasksCollectionName)
     .where('teamId', '==', teamId)
     .where('assignedUserIds', 'array-contains', userId)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByUserAndProject = async (userId, projectId) => {
@@ -90,13 +80,11 @@ export const getTasksByUserAndProject = async (userId, projectId) => {
     .collection(tasksCollectionName)
     .where('projectId', '==', projectId)
     .where('assignedUserIds', 'array-contains', userId)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const getTasksByPriority = async (teamId, priority) => {
@@ -104,13 +92,11 @@ export const getTasksByPriority = async (teamId, priority) => {
     .collection(tasksCollectionName)
     .where('teamId', '==', teamId)
     .where('priority', '==', priority)
-    .where('isDeleted', '!=', true)
     .get();
-  
-  return tasksSnapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+
+  return tasksSnapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() }))
+    .filter(doc => doc.isDeleted !== true);
 };
 
 export const updateTask = async (taskId, updateData) => {

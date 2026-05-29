@@ -29,15 +29,13 @@ export const getProjects = async () => {
 
 export const getProjectsByTeamId = async (teamId) => {
   const snapshot = await db
-    .collection(projectsCollectionName)
-    .where('teamId', '==', teamId)
-    .where('status', '!=', 'DELETED')
-    .get();
+  .collection(projectsCollectionName)
+  .where('teamId', '==', teamId)
+  .get();
 
-  return snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+return snapshot.docs
+  .map(doc => ({ id: doc.id, ...doc.data() }))
+  .filter(doc => doc.status !== 'DELETED');
 };
 
 export const getProjectById = async (id) => {
