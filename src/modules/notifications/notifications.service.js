@@ -19,10 +19,8 @@ export const getNotificationsForRecipient = async (recipientId) => {
 };
 export const readNotificationsForRecipient = async (recipientId) => {
   const readNotifications = await notificationsRepository.readByRecipient(recipientId);
-  const notifications = await notificationsRepository.getByRecipient(recipientId);
 
-
-  return notifications;
+  return readNotifications;
 };
 
 export const getNotificationById = async (notificationId,recipientId) => {
