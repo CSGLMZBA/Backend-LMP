@@ -47,35 +47,35 @@ export const stagesRepository = {
 
   // OBTENER ETAPAS POR CHART ID
   async findByChartId(chartId, teamId) {
-    let query = db
+    const snapshot = await db
       .collection(stagesCollectionName)
       .where('chartId', '==', chartId)
       .where('teamId', '==', teamId)
-      .where('isArchived', '!=', true);
-
-    const snapshot = await query.get();
+      .get();
 
     if (snapshot.empty) {
       return [];
     }
 
-    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
+    return sortByOrder(
+      snapshot.docs.map(serializeDoc).filter((s) => !s.isArchived)
+    );
   },
 
   // OBTENER ETAPAS POR TEAM ID
   async findByTeamId(teamId) {
-    let query = db
+    const snapshot = await db
       .collection(stagesCollectionName)
       .where('teamId', '==', teamId)
-      .where('isArchived', '!=', true);
-
-    const snapshot = await query.get();
+      .get();
 
     if (snapshot.empty) {
       return [];
     }
 
-    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
+    return sortByOrder(
+      snapshot.docs.map(serializeDoc).filter((s) => !s.isArchived)
+    );
   },
 
   // ACTUALIZAR ETAPA
@@ -168,21 +168,19 @@ export const stagesRepository = {
     const snapshot = await db
       .collection(stagesCollectionName)
       .where('teamId', '==', teamId)
-      .where('isArchived', '!=', true)
       .get();
 
     if (snapshot.empty) {
       return [];
     }
 
-    const stages = snapshot.docs.map(doc => serializeDoc(doc));
-    
-    // Filtrar etapas que han alcanzado su límite WIP
-    return stages.filter(stage => {
-      if (!stage.wipLimit) return false;
-      const taskCount = (stage.taskIds || []).length;
-      return taskCount >= stage.wipLimit;
-    });
+    return snapshot.docs
+      .map(serializeDoc)
+      .filter((stage) => {
+        if (stage.isArchived) return false;
+        if (!stage.wipLimit) return false;
+        return (stage.taskIds || []).length >= stage.wipLimit;
+      });
   },
 
   // OBTENER ETAPAS POR NOMBRE
@@ -192,7 +190,6 @@ export const stagesRepository = {
       .where('name', '==', name)
       .where('teamId', '==', teamId)
       .where('chartId', '==', chartId)
-      .where('isArchived', '!=', true)
       .limit(1)
       .get();
 
@@ -200,7 +197,8 @@ export const stagesRepository = {
       return null;
     }
 
-    return serializeDoc(snapshot.docs[0]);
+    const stage = serializeDoc(snapshot.docs[0]);
+    return stage.isArchived ? null : stage;
   },
 
   // CONTAR TAREAS POR ETAPA
@@ -222,18 +220,17 @@ export const stagesRepository = {
       query = query.where('chartId', '==', filters.chartId);
     }
 
-    if (filters.isArchived !== undefined) {
-      query = query.where('isArchived', '==', filters.isArchived);
-    } else {
-      query = query.where('isArchived', '!=', true);
-    }
-
     const snapshot = await query.get();
 
     if (snapshot.empty) {
       return [];
     }
 
-    return sortByOrder(snapshot.docs.map(doc => serializeDoc(doc)));
+    const stages = snapshot.docs.map(serializeDoc);
+    const filtered = filters.isArchived !== undefined
+      ? stages.filter((s) => Boolean(s.isArchived) === filters.isArchived)
+      : stages.filter((s) => !s.isArchived);
+
+    return sortByOrder(filtered);
   }
 };
