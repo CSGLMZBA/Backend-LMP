@@ -19,6 +19,25 @@ export const getNotifications = async (req, res) => {
     );
   }
 };
+export const getNotificationById = async (req, res) => {
+  try {
+    const notification = await notificationsService.getNotificationById(req.params.notificationId,
+      req.user.id);
+    return successResponse(
+      res,
+      'Notification retrieved successfully',
+      notification
+    );
+  } catch (error) {
+    return errorResponse(
+      res,
+      'Failed to get notification',
+      'NOTIFICATION_UNAUTHORIZED',
+      [error.message],
+      500
+    );
+  }
+};
 export const createNotificationMass = async (data, recipientIds) =>
 {
     recipientIds.forEach(recipientId => {

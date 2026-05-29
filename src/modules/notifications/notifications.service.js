@@ -18,17 +18,21 @@ export const getNotificationsForRecipient = async (recipientId) => {
 
   return notifications;
 };
-
-export const setNotificationReadStatus = async (notificationId, recipientId, read) => {
+export const getNotificationById = async (notificationId,recipientId) => {
   const notification = await notificationsRepository.findById(notificationId);
-
   if (!notification) {
     throw new Error('NOTIFICATION_NOT_FOUND');
   }
-
-  if (notification.recipientId !== recipientId) {
+  if (notification.recipientId !== recipientId)
+  {
     throw new Error('NOTIFICATION_UNAUTHORIZED');
   }
+
+  return notification;
+};
+
+export const setNotificationReadStatus = async (notificationId, recipientId, read) => {
+  const notification = await getNotificationById(notificationId,recipientId);
 
   return notificationsRepository.updateReadStatus(notificationId, read);
 };
