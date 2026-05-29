@@ -127,7 +127,7 @@ export const markAsUnread = async (req, res) => {
 
 export const createNotificationMass = async (data, recipientIds) => {
   recipientIds.forEach(recipientId => {
-    createNotification({ ...data, recipientId });
+    createNotification({ ...data, recipientId: recipientId });
   });
 };
 
