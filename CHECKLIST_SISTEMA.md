@@ -359,10 +359,26 @@ Falta:
 - Al archivar chart se archivan tambien sus stages activos.
 - Listados y lecturas de charts ignoran charts archivados.
 - Operaciones de stages validan que el chart exista, pertenezca al equipo y no este archivado.
+- Auditoria de charts:
+  - create
+  - update
+  - archive
+- Auditoria de stages/Kanban:
+  - create
+  - update
+  - reorder
+  - delete
+  - create_default
+  - add_task
+  - remove_task
+  - move_task
 
 ### Falta
 
-- Auditoria de charts/stages.
+- No hay pendientes funcionales criticos del Bloque 4.
+- Pendiente transversal:
+  - Probar manualmente endpoints.
+  - Agregar requests a Postman/Insomnia.
 
 ### Tareas Pequenas
 
@@ -377,7 +393,7 @@ Falta:
 - Persona C:
   - Probar dashboard con datos reales de proyecto/chart/task.
   - Ajustar campos para las tarjetas o graficas del frontend.
-  - Agregar auditoria donde aplique.
+  - Probar eventos de auditoria de charts/stages.
 
 ---
 

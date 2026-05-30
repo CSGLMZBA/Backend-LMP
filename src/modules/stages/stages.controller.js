@@ -3,6 +3,7 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 const stageTaskRelationErrors = {
   CHART_NOT_FOUND: ['Chart not found', 404],
@@ -34,6 +35,21 @@ export const createStage = async (req, res) => {
       req.validatedData,
       userId
     );
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'stage',
+      entityId: stage.id,
+      userId,
+      teamId: stage.teamId,
+      chartId: stage.chartId,
+      stageId: stage.id,
+      details: {
+        name: stage.name,
+        order: stage.order,
+        mappedStatus: stage.mappedStatus,
+      },
+    });
 
     return successResponse(
       res,
@@ -223,6 +239,19 @@ export const updateStage = async (req, res) => {
     
     const stage = await stagesService.updateStage(stageId, data, userId);
 
+    await recordAudit({
+      action: 'update',
+      entityType: 'stage',
+      entityId: stage.id,
+      userId,
+      teamId: stage.teamId,
+      chartId: stage.chartId,
+      stageId: stage.id,
+      details: {
+        fields: Object.keys(data),
+      },
+    });
+
     return successResponse(
       res,
       'Stage updated successfully',
@@ -300,6 +329,18 @@ export const reorderStages = async (req, res) => {
       userId
     );
 
+    await recordAudit({
+      action: 'reorder',
+      entityType: 'chart_stages',
+      entityId: chartId,
+      userId,
+      teamId,
+      chartId,
+      details: {
+        stageIds,
+      },
+    });
+
     return successResponse(
       res,
       'Stages reordered successfully',
@@ -373,6 +414,20 @@ export const addTaskToStage = async (req, res) => {
     
     const stage = await stagesService.addTaskToStage(stageId, taskId, userId);
 
+    await recordAudit({
+      action: 'add_task',
+      entityType: 'stage_task',
+      entityId: taskId,
+      userId,
+      teamId: stage.teamId,
+      chartId: stage.chartId,
+      stageId: stage.id,
+      taskId,
+      details: {
+        stageId: stage.id,
+      },
+    });
+
     return successResponse(
       res,
       'Task added to stage successfully',
@@ -436,6 +491,20 @@ export const removeTaskFromStage = async (req, res) => {
     
     const stage = await stagesService.removeTaskFromStage(stageId, taskId, userId);
 
+    await recordAudit({
+      action: 'remove_task',
+      entityType: 'stage_task',
+      entityId: taskId,
+      userId,
+      teamId: stage.teamId,
+      chartId: stage.chartId,
+      stageId: stage.id,
+      taskId,
+      details: {
+        stageId: stage.id,
+      },
+    });
+
     return successResponse(
       res,
       'Task removed from stage successfully',
@@ -494,6 +563,21 @@ export const moveTaskBetweenStages = async (req, res) => {
       toStageId,
       userId
     );
+
+    await recordAudit({
+      action: 'move_task',
+      entityType: 'stage_task',
+      entityId: taskId,
+      userId,
+      teamId: result.teamId,
+      chartId: result.chartId,
+      taskId,
+      details: {
+        fromStageId,
+        toStageId,
+        status: result.task.status,
+      },
+    });
 
     return successResponse(
       res,
@@ -558,6 +642,19 @@ export const deleteStage = async (req, res) => {
     
     const result = await stagesService.deleteStage(stageId, userId);
 
+    await recordAudit({
+      action: 'delete',
+      entityType: 'stage',
+      entityId: result.stageId,
+      userId,
+      teamId: result.teamId,
+      chartId: result.chartId,
+      stageId: result.stageId,
+      details: {
+        softDelete: true,
+      },
+    });
+
     return successResponse(
       res,
       'Stage deleted successfully',
@@ -611,6 +708,18 @@ export const createDefaultStages = async (req, res) => {
     const { chartId, teamId } = req.validatedData;
     
     const stages = await stagesService.createDefaultStages(chartId, teamId, userId);
+
+    await recordAudit({
+      action: 'create_default',
+      entityType: 'chart_stages',
+      entityId: chartId,
+      userId,
+      teamId,
+      chartId,
+      details: {
+        stageIds: stages.map((stage) => stage.id),
+      },
+    });
 
     return successResponse(
       res,

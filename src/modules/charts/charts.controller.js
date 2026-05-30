@@ -3,6 +3,7 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const createChart = async (req, res) => {
   try {
@@ -11,6 +12,20 @@ export const createChart = async (req, res) => {
       req.validatedData,
       userId
     );
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'chart',
+      entityId: chart.id,
+      userId,
+      teamId: chart.teamId,
+      chartId: chart.id,
+      details: {
+        name: chart.name,
+        projectId: chart.projectId,
+        stageIds: chart.stageIds || [],
+      },
+    });
 
     return successResponse(
       res,
@@ -125,6 +140,18 @@ export const updateChart = async (req, res) => {
       userId
     );
 
+    await recordAudit({
+      action: 'update',
+      entityType: 'chart',
+      entityId: chart.id,
+      userId,
+      teamId: chart.teamId,
+      chartId: chart.id,
+      details: {
+        fields: Object.keys(req.validatedData),
+      },
+    });
+
     return successResponse(
       res,
       'Chart updated successfully',
@@ -163,6 +190,19 @@ export const archiveChart = async (req, res) => {
     const userId = req.user.id;
     const { chartId } = req.params;
     const chart = await chartsService.archiveChart(chartId, userId);
+
+    await recordAudit({
+      action: 'archive',
+      entityType: 'chart',
+      entityId: chart.id,
+      userId,
+      teamId: chart.teamId,
+      chartId: chart.id,
+      details: {
+        projectId: chart.projectId,
+        stageIds: chart.stageIds || [],
+      },
+    });
 
     return successResponse(
       res,

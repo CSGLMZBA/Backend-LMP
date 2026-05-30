@@ -340,10 +340,13 @@ export const addTaskToStage = async (stageId, taskId, userId) => {
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
+    teamId: updated.teamId,
+    chartId: updated.chartId,
     taskIds: updated.taskIds || [],
     wipLimit: updated.wipLimit,
     order: Number.isInteger(updated.order) ? updated.order : null,
     mappedStatus: updated.mappedStatus || null,
+    taskId,
   });
 };
 
@@ -376,9 +379,12 @@ export const removeTaskFromStage = async (stageId, taskId, userId) => {
   return removeSensitiveFields({
     id: updated.id,
     name: updated.name,
+    teamId: updated.teamId,
+    chartId: updated.chartId,
     taskIds: updated.taskIds || [],
     order: Number.isInteger(updated.order) ? updated.order : null,
     mappedStatus: updated.mappedStatus || null,
+    taskId,
   });
 };
 
@@ -432,6 +438,8 @@ export const moveTaskBetweenStages = async (taskId, fromStageId, toStageId, user
   const toUpdatedTaskIds = [...(toStage.taskIds || []), taskId];
 
   return {
+    teamId: fromStage.teamId,
+    chartId: fromStage.chartId,
     fromStage: {
       id: fromStageId,
       taskIds: fromUpdatedTaskIds
@@ -470,7 +478,12 @@ export const deleteStage = async (stageId, userId) => {
   await stagesRepository.softDelete(stageId);
   await chartsRepository.removeStageFromChart(stage.chartId, stageId);
   
-  return { deleted: true, stageId: stageId };
+  return {
+    deleted: true,
+    stageId: stageId,
+    teamId: stage.teamId,
+    chartId: stage.chartId,
+  };
 };
 
 export const archiveStagesByChart = async (chartId, teamId, userId) => {
