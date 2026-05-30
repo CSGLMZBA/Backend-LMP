@@ -13,6 +13,8 @@ import {
   teamPriorityParamsSchema,
 } from './task.schema.js';
 import * as tasksController from './task.controller.js';
+import * as commentsController from './comments/comments.controller.js';
+import * as commentsSchema from './comments/comments.schema.js'
 
 const router = express.Router();
 
@@ -86,6 +88,28 @@ router.post(
   validate(taskIdParamSchema, 'params'),
   validate(assignUsersToTaskSchema),
   tasksController.assignUsersToTask
+);
+
+// Poner un comentario en la tarea
+router.post(
+  '/:id/comments',
+  validate(commentsSchema.postParams, 'params'),
+  validate(commentsSchema.comment),
+  commentsController.postComment
+);
+
+// Obtener los comentarios de la tarea
+router.get(
+  '/:id/comments',
+  validate(commentsSchema.getParams, 'params'),
+  commentsController.getCommentsByTaskId
+);
+
+// Borrar los comentarios de la tarea
+router.delete(
+  '/:id/comments/:commentId',
+  validate(commentsSchema.deleteParams, 'params'),
+  commentsController.deleteCommentById
 );
 
 // Eliminar tarea (soft delete)
