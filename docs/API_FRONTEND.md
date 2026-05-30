@@ -204,6 +204,25 @@ Body:
 - `PATCH /api/teams/:teamId/members/:userId/role`
 - `DELETE /api/teams/:teamId/members/:userId`
 
+Respuesta de miembros:
+
+```json
+[
+  {
+    "id": "team-member-id",
+    "teamId": "team-id",
+    "userId": "user-id",
+    "role": "MEMBER",
+    "user": {
+      "id": "user-id",
+      "userName": "isa",
+      "displayName": "Isa",
+      "email": "isa@example.com"
+    }
+  }
+]
+```
+
 Body para agregar miembro:
 
 ```json

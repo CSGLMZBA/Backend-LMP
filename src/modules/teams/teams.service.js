@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import * as teamsRepository from './teams.repository.js';
+import { usersRepository } from '../users/users.repository.js';
 import { env } from '../../config/env.js';
 
 const removeSensitiveFields = (team) => {
@@ -182,7 +183,31 @@ export const joinTeam = async (teamId, userId, password) => {
 export const getTeamMembers = async (teamId, userId) => {
   await assertTeamMembership(teamId, userId);
 
-  return teamsRepository.getTeamMembersByTeamId(teamId);
+  const members = await teamsRepository.getTeamMembersByTeamId(teamId);
+  const users = await Promise.all(
+    members.map((member) => usersRepository.findById(member.userId))
+  );
+  const usersById = new Map(
+    users
+      .filter(Boolean)
+      .map((user) => [user.id, user])
+  );
+
+  return members.map((member) => {
+    const user = usersById.get(member.userId);
+
+    return {
+      ...member,
+      user: user
+        ? {
+          id: user.id,
+          userName: user.userName,
+          displayName: user.displayName,
+          email: user.email,
+        }
+        : null,
+    };
+  });
 };
 
 export const addTeamMember = async (teamId, data, addedBy) => {
