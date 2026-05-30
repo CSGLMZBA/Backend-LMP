@@ -511,6 +511,13 @@ Falta:
 - `.env.example` con variables requeridas.
 - README con instalacion, variables, ejecucion local y seed de roles.
 - Respuesta JSON estandar.
+- Documentacion de API para frontend por modulo:
+  - `docs/API_FRONTEND.md`
+- Timestamps normalizados en respuestas exitosas:
+  - `Date`
+  - Firestore Timestamp
+  - Timestamp serializado con `_seconds/_nanoseconds`
+  - Timestamp serializado con `seconds/nanoseconds`
 - No se detectaron restos obvios de:
   - `teams.members`
   - `superadmin`
@@ -520,7 +527,6 @@ Falta:
 
 - Tests reales o pruebas manuales documentadas.
 - Coleccion Postman/Insomnia.
-- Documentacion de API para frontend por modulo.
 - Documento breve de arquitectura:
   - modulos
   - roles
@@ -529,17 +535,18 @@ Falta:
 - Usuario de prueba documentado.
 - Capturas o video corto de funcionamiento.
 - Revision de indices Firestore para queries con `!=`.
-- Normalizar timestamps:
-  - actualmente hay mezcla de `new Date()` y `FieldValue.serverTimestamp()`.
+- Revisar si conviene migrar escritura interna de timestamps a un solo origen:
+  - hoy la API ya normaliza la salida para frontend.
+  - internamente todavia puede haber `new Date()` y `FieldValue.serverTimestamp()`.
 - Revisar sanitizacion.
 - Revisar errores genericos en controladores.
 
 ### Tareas Pequenas
 
 - Persona A:
-  - Documentar API por modulo.
-  - Agregar ejemplos de request/response.
-  - Marcar permisos requeridos por endpoint.
+  - Revisar `docs/API_FRONTEND.md` con el equipo frontend.
+  - Agregar ejemplos faltantes si el frontend detecta huecos.
+  - Mantener permisos por endpoint actualizados.
 - Persona B:
   - Crear coleccion Postman/Insomnia.
   - Probar flujo completo de usuario.
@@ -547,7 +554,7 @@ Falta:
   - Documentar resultados de pruebas manuales.
 - Persona C:
   - Crear documento de arquitectura.
-  - Revisar timestamps.
+  - Revisar si se migran escrituras internas de timestamps.
   - Detectar indices necesarios de Firestore.
   - Mejorar errores consistentes.
 

@@ -1,4 +1,6 @@
 import * as audit from '../middleware/audit.middleware.js'
+import { normalizeTimestamps } from './timestamps.js';
+
 export const successResponse = (
     res,
     message,
@@ -6,11 +8,12 @@ export const successResponse = (
     status = 200,
     auditData = null
   ) => {
+    const normalizedData = normalizeTimestamps(data);
     const jsonResponse =
     {
       success: true,
       message,  
-      data
+      data: normalizedData
     }
     if(auditData !== null)
     {
