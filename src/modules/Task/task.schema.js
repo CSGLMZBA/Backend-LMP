@@ -1,5 +1,13 @@
 import { z } from 'zod';
 
+const optionalIntQuery = (schema) => z.preprocess(
+  (value) => {
+    if (value === undefined || value === null || value === '') return undefined;
+    return Number(value);
+  },
+  schema.optional()
+);
+
 // Esquema para crear una tarea
 export const createTaskSchema = z.object({
   // Campos obligatorios
@@ -87,14 +95,14 @@ export const getTasksQuerySchema = z.object({
   teamId: z.string().optional(),
   projectId: z.string().optional(),
   stageId: z.string().optional(),
-  priority: z.string().transform(val => parseInt(val)).pipe(z.number().int().min(1).max(4)).optional(),
+  priority: optionalIntQuery(z.number().int().min(1).max(4)),
   status: z.enum(['PENDING', 'IN_PROGRESS', 'REVIEW', 'COMPLETED', 'CANCELLED']).optional(),
   assignedTo: z.string().optional(),
   search: z.string().max(100, 'Search term too long').optional(),
-  limit: z.string().transform(val => parseInt(val)).pipe(z.number().int().min(1).max(100)).optional().default('20'),
-  offset: z.string().transform(val => parseInt(val)).pipe(z.number().int().min(0)).optional().default('0'),
-  sortBy: z.enum(['createdAt', 'dueDate', 'priority', 'status']).optional().default('createdAt'),
-  sortOrder: z.enum(['asc', 'desc']).optional().default('desc'),
+  limit: optionalIntQuery(z.number().int().min(1).max(100)),
+  offset: optionalIntQuery(z.number().int().min(0)),
+  sortBy: z.enum(['createdAt', 'dueDate', 'priority', 'status']).optional(),
+  sortOrder: z.enum(['asc', 'desc']).optional(),
 });
 
 // Esquema para validar ID de tarea en parámetros

@@ -113,8 +113,10 @@ export const getTasksByTeam = async (req, res) => {
   try {
     const userId = req.user.id;
     const { teamId } = req.params;
-    
-    const tasks = await tasksService.getTasksByTeam(teamId, userId);
+    const tasks = await tasksService.getTasksByUser(userId, {
+      ...req.validatedData,
+      teamId,
+    });
 
     return successResponse(
       res,
@@ -166,9 +168,10 @@ export const getTasksByStage = async (req, res) => {
 export const getMyTasks = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { teamId, projectId } = req.query; // Opcional: filtrar por equipo/proyecto
-    
-    const tasks = await tasksService.getTasksByUser(userId, teamId, projectId);
+    const tasks = await tasksService.getTasksByUser(
+      userId,
+      req.validatedData
+    );
 
     return successResponse(
       res,
@@ -176,6 +179,16 @@ export const getMyTasks = async (req, res) => {
       tasks
     );
   } catch (error) {
+    if (error.message === 'UNAUTHORIZED_TEAM_ACCESS') {
+      return errorResponse(
+        res,
+        'You do not have permission to view tasks for this team',
+        'UNAUTHORIZED_TEAM_ACCESS',
+        [],
+        403
+      );
+    }
+
     return errorResponse(res, 'Error retrieving your tasks');
   }
 };

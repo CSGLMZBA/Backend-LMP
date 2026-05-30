@@ -40,6 +40,7 @@ router.post(
 router.get(
   '/team/:teamId',
   validate(teamIdParamSchema, 'params'),
+  validate(getTasksQuerySchema, 'query'),
   tasksController.getTasksByTeam
 );
 

@@ -463,15 +463,21 @@ Falta:
   - mark_read
   - mark_unread
   - delete
+- Filtros de tareas en `GET /api/tasks/my-tasks` y `GET /api/tasks/team/:teamId`:
+  - responsable con `assignedTo`
+  - prioridad con `priority`
+  - estado con `status`
+  - proyecto con `projectId`
+  - etapa con `stageId`
+  - busqueda basica con `search`
+  - orden opcional con `sortBy` y `sortOrder`
+  - paginacion opcional con `limit` y `offset`
 
 ### Falta Critico
 
-- Falta manejo real de subtareas. Se pospone por decision del equipo.
-- Faltan filtros suficientes para aceptacion:
-  - responsable
-  - prioridad
-  - estado
-  - proyecto
+- No hay pendientes funcionales criticos activos del Bloque 5.
+- Pospuesto por decision del equipo:
+  - manejo real de subtareas.
 
 ### Tareas Pequenas
 
@@ -479,6 +485,7 @@ Falta:
   - Probar movimiento de tareas entre stages default.
   - Probar que `PUT /tasks/:id` siga editando datos generales.
   - Probar que `PATCH /tasks/:id/status` no mueva columnas.
+  - Probar filtros de tareas por responsable/prioridad/estado/proyecto.
 - Persona B:
   - Probar CRUD de comentarios por tarea.
   - Probar que solo miembros del equipo puedan comentar/ver.

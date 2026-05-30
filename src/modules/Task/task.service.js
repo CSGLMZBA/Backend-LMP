@@ -2,9 +2,114 @@ import * as tasksRepository from './task.repository.js';
 import * as projectsRepository from '../projects/projects.repository.js';
 import * as chartsRepository from '../charts/charts.repository.js';
 import * as notificationsService from '../notifications/notifications.service.js';
+import * as teamsService from '../teams/teams.service.js';
 import { stagesRepository } from '../stages/stages.repository.js';
 
 const sortByPriority = (tasks) => [...tasks].sort((a, b) => b.priority - a.priority);
+
+const toSortableValue = (value) => {
+  if (value?._seconds !== undefined) return value._seconds;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'string') {
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? value.toLowerCase() : timestamp;
+  }
+  return value ?? '';
+};
+
+const sortTasks = (tasks, sortBy, sortOrder = 'desc') => {
+  if (!sortBy) {
+    return sortByPriority(tasks);
+  }
+
+  const direction = sortOrder === 'asc' ? 1 : -1;
+
+  return [...tasks].sort((a, b) => {
+    const left = toSortableValue(a[sortBy]);
+    const right = toSortableValue(b[sortBy]);
+
+    if (left < right) return -1 * direction;
+    if (left > right) return 1 * direction;
+    return 0;
+  });
+};
+
+const paginateTasks = (tasks, limit = 20, offset = 0) => (
+  tasks.slice(offset, offset + limit)
+);
+
+const applyTaskPagination = (tasks, filters = {}) => {
+  if (filters.limit === undefined && filters.offset === undefined) {
+    return tasks;
+  }
+
+  return paginateTasks(
+    tasks,
+    Number(filters.limit ?? 20),
+    Number(filters.offset ?? 0)
+  );
+};
+
+const filterTasks = (tasks, filters = {}) => {
+  const search = filters.search?.trim().toLowerCase();
+
+  return tasks.filter((task) => {
+    if (filters.teamId && task.teamId !== filters.teamId) return false;
+    if (filters.projectId && task.projectId !== filters.projectId) return false;
+    if (filters.stageId && task.stageId !== filters.stageId) return false;
+    if (filters.priority !== undefined && task.priority !== filters.priority) return false;
+    if (filters.status && task.status !== filters.status) return false;
+
+    if (
+      filters.assignedTo &&
+      !(task.assignedUserIds || []).includes(filters.assignedTo)
+    ) {
+      return false;
+    }
+
+    if (search) {
+      const name = task.name?.toLowerCase() || '';
+      const description = task.description?.toLowerCase() || '';
+      const tags = (task.tags || []).join(' ').toLowerCase();
+
+      if (
+        !name.includes(search) &&
+        !description.includes(search) &&
+        !tags.includes(search)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
+const getVisibleTasksForUser = async (userId, filters = {}) => {
+  if (filters.teamId) {
+    const userBelongsToTeam = await tasksRepository.verifyUserInTeam(
+      filters.teamId,
+      userId
+    );
+
+    if (!userBelongsToTeam) {
+      throw new Error('UNAUTHORIZED_TEAM_ACCESS');
+    }
+
+    return tasksRepository.getTasksByTeamId(filters.teamId);
+  }
+
+  if (!filters.assignedTo || filters.assignedTo === userId) {
+    return tasksRepository.getTasksByUserId(userId);
+  }
+
+  const teams = await teamsService.getTeamsByUser(userId);
+  const taskLists = await Promise.all(
+    teams.map((team) => tasksRepository.getTasksByTeamId(team.id))
+  );
+
+  return taskLists.flat();
+};
 
 const getNotificationRecipients = (userIds, actorId) => (
   [...new Set(userIds)].filter((userId) => userId && userId !== actorId)
@@ -275,29 +380,17 @@ export const getTasksByStage = async (teamId, stageId, userId) => {
   }));
 };
 
-export const getTasksByUser = async (userId, teamId = null, projectId = null) => {
-  let tasks;
-  
-  if (projectId) {
-    tasks = await tasksRepository.getTasksByUserAndProject(userId, projectId);
-  } else if (teamId) {
-    tasks = await tasksRepository.getTasksByUserAndTeam(userId, teamId);
-  } else {
-    tasks = await tasksRepository.getTasksByUserId(userId);
-  }
-  
-  return sortByPriority(tasks).map(task => ({
-    id: task.id,
-    name: task.name,
-    teamId: task.teamId,
-    projectId: task.projectId,
-    chartId: task.chartId,
-    stageId: task.stageId,
-    description: task.description,
-    priority: task.priority,
-    status: task.status,
-    dueDate: task.dueDate
-  }));
+export const getTasksByUser = async (userId, filters = {}) => {
+  const tasks = await getVisibleTasksForUser(userId, filters);
+  const filteredTasks = filterTasks(tasks, filters);
+  const sortedTasks = sortTasks(
+    filteredTasks,
+    filters.sortBy,
+    filters.sortOrder
+  );
+  const paginatedTasks = applyTaskPagination(sortedTasks, filters);
+
+  return paginatedTasks.map(mapTaskListItem);
 };
 
 export const getTaskById = async (taskId, userId) => {
