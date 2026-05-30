@@ -408,9 +408,10 @@ export const updateTaskStatus = async (taskId, newStatus, userId, comment = '') 
     updateData.assignedUserIds = [];
   }
 
-  // REVIEW → IN_PROGRESS: limpiar revisor, dejar que todos puedan asignarse
+  // REVIEW → IN_PROGRESS: limpiar revisor y workers para el nuevo ciclo de trabajo
   if (task.status === 'REVIEW' && newStatus === 'IN_PROGRESS') {
     updateData.assignedUserIds = [];
+    updateData.workerIds = [];
   }
 
   // REVIEW → COMPLETED: combinar trabajadores + revisor como historial de la tarea
