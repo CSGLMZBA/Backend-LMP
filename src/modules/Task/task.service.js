@@ -1,9 +1,33 @@
 import * as tasksRepository from './task.repository.js';
 import * as projectsRepository from '../projects/projects.repository.js';
 import * as chartsRepository from '../charts/charts.repository.js';
+import * as notificationsService from '../notifications/notifications.service.js';
 import { stagesRepository } from '../stages/stages.repository.js';
 
 const sortByPriority = (tasks) => [...tasks].sort((a, b) => b.priority - a.priority);
+
+const getNotificationRecipients = (userIds, actorId) => (
+  [...new Set(userIds)].filter((userId) => userId && userId !== actorId)
+);
+
+const notifyTaskUsers = async (task, actorId, notification) => {
+  const recipients = getNotificationRecipients(notification.recipientIds, actorId);
+
+  if (recipients.length === 0) {
+    return [];
+  }
+
+  return notificationsService.createNotificationsForRecipients({
+    title: notification.title,
+    body: notification.body,
+    type: notification.type,
+    actorId,
+    teamId: task.teamId,
+    projectId: task.projectId,
+    chartId: task.chartId || '',
+    taskId: task.id,
+  }, recipients);
+};
 
 const buildMappedStatusUpdate = (task, stage, userId) => {
   if (!stage?.mappedStatus || task.status === stage.mappedStatus) {
@@ -207,7 +231,17 @@ export const createTask = async (data, userId) => {
     await stagesRepository.addTask(taskData.stageId, newTask.id);
   }
 
-  return mapTaskListItem(newTask);
+  const notifications = await notifyTaskUsers(newTask, userId, {
+    type: 'TASK_ASSIGNED',
+    title: 'Nueva tarea asignada',
+    body: `Se te asigno la tarea: ${newTask.name}`,
+    recipientIds: newTask.assignedUserIds || [],
+  });
+
+  return {
+    ...mapTaskListItem(newTask),
+    notificationIds: notifications.map((notification) => notification.id),
+  };
 };
 
 export const getTasksByTeam = async (teamId, userId) => {
@@ -360,6 +394,20 @@ export const updateTask = async (taskId, updateData, userId) => {
   updatedData.updatedBy = userId;
   
   const updatedTask = await tasksRepository.updateTask(taskId, updatedData);
+  let notifications = [];
+
+  if (updateData.assignedUserIds !== undefined) {
+    const previousAssigned = new Set(task.assignedUserIds || []);
+    const newlyAssigned = (updatedTask.assignedUserIds || [])
+      .filter((assignedUserId) => !previousAssigned.has(assignedUserId));
+
+    notifications = await notifyTaskUsers(updatedTask, userId, {
+      type: 'TASK_ASSIGNED',
+      title: 'Tarea asignada',
+      body: `Se te asigno la tarea: ${updatedTask.name}`,
+      recipientIds: newlyAssigned,
+    });
+  }
   
   return {
     id: updatedTask.id,
@@ -371,7 +419,8 @@ export const updateTask = async (taskId, updateData, userId) => {
     assignedUserIds: updatedTask.assignedUserIds,
     priority: updatedTask.priority,
     status: updatedTask.status,
-    dueDate: updatedTask.dueDate
+    dueDate: updatedTask.dueDate,
+    notificationIds: notifications.map((notification) => notification.id),
   };
 };
 
@@ -433,12 +482,29 @@ export const updateTaskStatus = async (taskId, newStatus, userId, comment = '') 
 
   const updatedTask = await tasksRepository.updateTask(taskId, updateData);
 
+  const notifications = await notifyTaskUsers(updatedTask, userId, {
+    type: 'TASK_STATUS_CHANGED',
+    title: 'Estado de tarea actualizado',
+    body: `La tarea "${updatedTask.name}" cambio a ${updatedTask.status}`,
+    recipientIds: [
+      ...(task.assignedUserIds || []),
+      ...(task.workerIds || []),
+      task.createdBy,
+    ],
+  });
+
   return {
     id: updatedTask.id,
+    name: updatedTask.name,
+    teamId: updatedTask.teamId,
+    projectId: updatedTask.projectId,
+    chartId: updatedTask.chartId,
+    stageId: updatedTask.stageId,
     status: updatedTask.status,
     completedAt: updatedTask.completedAt,
     assignedUserIds: updatedTask.assignedUserIds,
     workerIds: updatedTask.workerIds || [],
+    notificationIds: notifications.map((notification) => notification.id),
   };
 };
 
@@ -459,10 +525,23 @@ export const assignUsersToTask = async (taskId, userIds, assignedBy) => {
   };
   
   const updatedTask = await tasksRepository.updateTask(taskId, updateData);
+
+  const notifications = await notifyTaskUsers(updatedTask, assignedBy, {
+    type: 'TASK_ASSIGNED',
+    title: 'Tarea asignada',
+    body: `Se te asigno la tarea: ${updatedTask.name}`,
+    recipientIds: userIds,
+  });
   
   return {
     id: updatedTask.id,
-    assignedUserIds: updatedTask.assignedUserIds
+    name: updatedTask.name,
+    teamId: updatedTask.teamId,
+    projectId: updatedTask.projectId,
+    chartId: updatedTask.chartId,
+    stageId: updatedTask.stageId,
+    assignedUserIds: updatedTask.assignedUserIds,
+    notificationIds: notifications.map((notification) => notification.id),
   };
 };
 
@@ -499,5 +578,12 @@ export const deleteTask = async (taskId, userId) => {
   }
   
   await tasksRepository.softDeleteTask(taskId);
-  return { deleted: true, taskId: taskId };
+  return {
+    deleted: true,
+    taskId: taskId,
+    teamId: task.teamId,
+    projectId: task.projectId,
+    chartId: task.chartId,
+    stageId: task.stageId,
+  };
 };

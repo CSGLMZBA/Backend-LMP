@@ -1,5 +1,6 @@
 import * as tasksService from './task.service.js';
 import { successResponse, errorResponse, } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 const relationErrorMessages = {
   PROJECT_ID_REQUIRED: ['Project ID is required', 400],
@@ -31,6 +32,22 @@ export const createTask = async (req, res) => {
       req.validatedData,
       userId
     );
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'task',
+      entityId: task.id,
+      userId,
+      teamId: task.teamId,
+      chartId: task.chartId || '',
+      stageId: task.stageId || '',
+      taskId: task.id,
+      details: {
+        projectId: task.projectId,
+        assignedUserIds: task.assignedUserIds || [],
+        notificationIds: task.notificationIds || [],
+      },
+    });
 
     return successResponse(
       res,
@@ -214,6 +231,22 @@ export const updateTask = async (req, res) => {
       userId
     );
 
+    await recordAudit({
+      action: 'update',
+      entityType: 'task',
+      entityId: updatedTask.id,
+      userId,
+      teamId: updatedTask.teamId,
+      chartId: updatedTask.chartId || '',
+      stageId: updatedTask.stageId || '',
+      taskId: updatedTask.id,
+      details: {
+        projectId: updatedTask.projectId,
+        fields: Object.keys(req.validatedData),
+        notificationIds: updatedTask.notificationIds || [],
+      },
+    });
+
     return successResponse(
       res,
       'Task updated successfully',
@@ -268,6 +301,22 @@ export const updateTaskStatus = async (req, res) => {
       comment
     );
 
+    await recordAudit({
+      action: 'status_change',
+      entityType: 'task',
+      entityId: updatedTask.id,
+      userId,
+      teamId: updatedTask.teamId,
+      chartId: updatedTask.chartId || '',
+      stageId: updatedTask.stageId || '',
+      taskId: updatedTask.id,
+      details: {
+        projectId: updatedTask.projectId,
+        status: updatedTask.status,
+        notificationIds: updatedTask.notificationIds || [],
+      },
+    });
+
     return successResponse(
       res,
       'Task status updated successfully',
@@ -318,6 +367,22 @@ export const assignUsersToTask = async (req, res) => {
       userId
     );
 
+    await recordAudit({
+      action: 'assign_users',
+      entityType: 'task',
+      entityId: updatedTask.id,
+      userId,
+      teamId: updatedTask.teamId,
+      chartId: updatedTask.chartId || '',
+      stageId: updatedTask.stageId || '',
+      taskId: updatedTask.id,
+      details: {
+        projectId: updatedTask.projectId,
+        assignedUserIds: updatedTask.assignedUserIds || [],
+        notificationIds: updatedTask.notificationIds || [],
+      },
+    });
+
     return successResponse(
       res,
       'Users assigned to task successfully',
@@ -362,6 +427,21 @@ export const deleteTask = async (req, res) => {
     const { id } = req.params;
     
     const result = await tasksService.deleteTask(id, userId);
+
+    await recordAudit({
+      action: 'delete',
+      entityType: 'task',
+      entityId: result.taskId,
+      userId,
+      teamId: result.teamId,
+      chartId: result.chartId || '',
+      stageId: result.stageId || '',
+      taskId: result.taskId,
+      details: {
+        projectId: result.projectId,
+        softDelete: true,
+      },
+    });
 
     return successResponse(
       res,

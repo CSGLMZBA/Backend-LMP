@@ -1,5 +1,6 @@
 import * as notificationsService from './notifications.service.js';
 import { successResponse, errorResponse } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const getNotifications = async (req, res) => {
   try {
@@ -22,6 +23,16 @@ export const getNotifications = async (req, res) => {
 export const patchNotificationsAsRead = async (req, res) => {
   try {
     const notifications = await notificationsService.readNotificationsForRecipient(req.user.id);
+
+    await recordAudit({
+      action: 'read_all',
+      entityType: 'notification',
+      userId: req.user.id,
+      details: {
+        count: notifications.filter((notification) => notification.read).length,
+      },
+    });
+
     return successResponse(
       res,
       'Notifications Read successfully',
@@ -83,6 +94,19 @@ export const markAsRead = async (req, res) => {
       true
     );
 
+    await recordAudit({
+      action: 'mark_read',
+      entityType: 'notification',
+      entityId: notification.id,
+      userId: req.user.id,
+      teamId: notification.teamId || '',
+      chartId: notification.chartId || '',
+      taskId: notification.taskId || '',
+      details: {
+        projectId: notification.projectId || '',
+      },
+    });
+
     return successResponse(
       res,
       'Notification marked as read',
@@ -108,6 +132,19 @@ export const markAsUnread = async (req, res) => {
       false
     );
 
+    await recordAudit({
+      action: 'mark_unread',
+      entityType: 'notification',
+      entityId: notification.id,
+      userId: req.user.id,
+      teamId: notification.teamId || '',
+      chartId: notification.chartId || '',
+      taskId: notification.taskId || '',
+      details: {
+        projectId: notification.projectId || '',
+      },
+    });
+
     return successResponse(
       res,
       'Notification marked as unread',
@@ -126,9 +163,7 @@ export const markAsUnread = async (req, res) => {
 };
 
 export const createNotificationMass = async (data, recipientIds) => {
-  recipientIds.forEach(recipientId => {
-    createNotification({ ...data, recipientId: recipientId });
-  });
+  return notificationsService.createNotificationsForRecipients(data, recipientIds);
 };
 
 export const deleteNotification = async (req, res) => {
@@ -137,6 +172,20 @@ export const deleteNotification = async (req, res) => {
       req.params.notificationId,
       req.user.id
     );
+
+    await recordAudit({
+      action: 'delete',
+      entityType: 'notification',
+      entityId: notification.notificationId,
+      userId: req.user.id,
+      teamId: notification.teamId || '',
+      chartId: notification.chartId || '',
+      taskId: notification.taskId || '',
+      details: {
+        projectId: notification.projectId || '',
+        softDelete: true,
+      },
+    });
 
     return successResponse(
       res,

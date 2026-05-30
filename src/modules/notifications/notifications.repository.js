@@ -8,8 +8,14 @@
     title: '',
     body: '',
     recipientId: '',
-    type: 0,
+    type: '',
     read: false,
+    actorId: '',
+    teamId: '',
+    projectId: '',
+    chartId: '',
+    taskId: '',
+    isDeleted: false,
   };
 
   const serializeDoc = (doc) => ({
@@ -22,6 +28,8 @@
       const docRef = await db.collection(notificationsCollectionName).add({
         ...DEFAULT_NOTIFICATION_FIELDS,
         ...data,
+        read: false,
+        isDeleted: false,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
@@ -39,14 +47,20 @@
       if (snapshot.empty) {
         return [];
       }
-      snapshot.docs.forEach(async (doc)=>
-      {
+      const activeDocs = snapshot.docs
+        .filter((doc) => doc.data().isDeleted !== true);
+
+      await Promise.all(
+        activeDocs.map((doc) => {
           const docRef = db.collection(notificationsCollectionName).doc(doc.id);
-          await docRef.update({
+          return docRef.update({
             read: true,
+            readAt: FieldValue.serverTimestamp(),
             updatedAt: FieldValue.serverTimestamp(),
           });
-      });
+        })
+      );
+
       const updated = await db
         .collection(notificationsCollectionName)
         .where('recipientId', '==', recipientId)
@@ -55,6 +69,7 @@
 
       return updated.docs
         .map(serializeDoc)
+        .filter((notification) => notification.isDeleted !== true)
         .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
     },
     async getByRecipient(recipientId) {
@@ -69,6 +84,7 @@
 
       return snapshot.docs
         .map(serializeDoc)
+        .filter((notification) => notification.isDeleted !== true)
         .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
     },
 
@@ -77,6 +93,7 @@
 
       await docRef.update({
         read,
+        readAt: read ? FieldValue.serverTimestamp() : null,
         updatedAt: FieldValue.serverTimestamp(),
       });
 
@@ -92,8 +109,14 @@
         return null;
       }
 
-      await docRef.delete();
-      return serializeDoc(existing);
+      await docRef.update({
+        isDeleted: true,
+        deletedAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      const deleted = await docRef.get();
+      return serializeDoc(deleted);
     },
 
     async findById(id) {

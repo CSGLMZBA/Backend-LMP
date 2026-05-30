@@ -440,14 +440,33 @@ Falta:
   - create
   - update
   - delete
+- Notificaciones:
+  - `GET /api/notifications`
+  - `GET /api/notifications/:notificationId`
+  - `PATCH /api/notifications/read-all`
+  - `PATCH /api/notifications/:notificationId/read`
+  - `PATCH /api/notifications/:notificationId/unread`
+  - `DELETE /api/notifications/:notificationId`
+- Creacion automatica de notificaciones al:
+  - crear tarea con usuarios asignados
+  - asignar usuarios a una tarea
+  - actualizar asignados desde `PUT /api/tasks/:id`
+  - cambiar status logico de una tarea
+- Auditoria de tareas:
+  - create
+  - update
+  - status_change
+  - assign_users
+  - delete
+- Auditoria de notificaciones:
+  - read_all
+  - mark_read
+  - mark_unread
+  - delete
 
 ### Falta Critico
 
 - Falta manejo real de subtareas. Se pospone por decision del equipo.
-- Faltan notificaciones, obligatorias para TaskFlow:
-  - `GET /api/notifications`
-  - `PATCH /api/notifications/read-all`
-- Falta auditoria de tareas/notificaciones.
 - Faltan filtros suficientes para aceptacion:
   - responsable
   - prioridad
@@ -466,11 +485,10 @@ Falta:
   - Probar que solo autor u OWNER/MANAGER puedan editar/eliminar.
   - Probar auditoria de comentarios.
 - Persona C:
-  - Crear modulo `notifications`.
-  - Crear notificaciones al asignar tarea o cambiar estado.
-  - Crear `GET /api/notifications`.
-  - Crear `PATCH /api/notifications/read-all`.
-  - Auditar notificaciones si aplica.
+  - Probar notificaciones al crear/asignar/cambiar status de tarea.
+  - Probar `GET /api/notifications`.
+  - Probar `PATCH /api/notifications/read-all`.
+  - Probar auditoria de tareas/notificaciones.
 
 ---
 
