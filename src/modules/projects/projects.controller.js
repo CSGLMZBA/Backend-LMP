@@ -4,11 +4,25 @@ import {
   successResponse,
   errorResponse,
 } from '../../utils/response.js';
+import { recordAudit } from '../../middleware/audit.middleware.js';
 
 export const createProject = async (req, res) => {
   try {
     const project =
       await service.createProject(req.validatedData, req.user.id);
+
+    await recordAudit({
+      action: 'create',
+      entityType: 'project',
+      entityId: project.id,
+      userId: req.user.id,
+      teamId: project.teamId,
+      details: {
+        name: project.name,
+        status: project.status,
+      },
+    });
+
     return successResponse(res, 'Proyecto creado', project, 201);
   } catch (error) {
     return errorResponse(
@@ -20,7 +34,10 @@ export const createProject = async (req, res) => {
 
 export const getProjects = async (req, res) => {
   try {
-    const projects = await service.getProjects(req.user.id);
+    const projects = await service.getFilteredProjects(
+      req.user.id,
+      req.validatedData
+    );
     return successResponse(
       res,
       'Proyectos obtenidos',
@@ -78,6 +95,17 @@ export const updateProject = async (req, res) => {
       req.user.id
     );
 
+    await recordAudit({
+      action: 'update',
+      entityType: 'project',
+      entityId: project.id,
+      userId: req.user.id,
+      teamId: project.teamId,
+      details: {
+        fields: Object.keys(req.validatedData),
+      },
+    });
+
     return successResponse(res, 'Proyecto actualizado', project);
   } catch (error) {
     if (error.message === 'PROJECT_NOT_FOUND') {
@@ -115,6 +143,17 @@ export const updateProjectStatus = async (req, res) => {
       req.user.id
     );
 
+    await recordAudit({
+      action: 'status_change',
+      entityType: 'project',
+      entityId: project.id,
+      userId: req.user.id,
+      teamId: project.teamId,
+      details: {
+        status: project.status,
+      },
+    });
+
     return successResponse(res, 'Estatus de proyecto actualizado', project);
   } catch (error) {
     if (error.message === 'PROJECT_NOT_FOUND') {
@@ -150,6 +189,18 @@ export const deleteProject = async (req, res) => {
       req.params.projectId,
       req.user.id
     );
+
+    await recordAudit({
+      action: 'delete',
+      entityType: 'project',
+      entityId: project.id,
+      userId: req.user.id,
+      teamId: project.teamId,
+      details: {
+        softDelete: true,
+        status: project.status,
+      },
+    });
 
     return successResponse(res, 'Proyecto eliminado', project);
   } catch (error) {

@@ -9,6 +9,7 @@ import {
 } from './projects.controller.js';
 import {
   createProjectSchema,
+  getProjectsQuerySchema,
   projectIdParamSchema,
   updateProjectSchema,
   updateProjectStatusSchema,
@@ -19,7 +20,7 @@ import { authMiddleware } from '../../middleware/auth.middleware.js';
 const router = Router();
 router.use(authMiddleware());
 router.post('/', validate(createProjectSchema), createProject);
-router.get('/', getProjects);
+router.get('/', validate(getProjectsQuerySchema, 'query'), getProjects);
 router.get(
   '/:projectId',
   validate(projectIdParamSchema, 'params'),

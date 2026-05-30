@@ -300,23 +300,31 @@ Falta:
   - tareas vencidas
   - tareas asignadas al usuario
   - resumen por proyecto
+- Auditoria de proyectos:
+  - create
+  - update
+  - status_change
+  - delete
+- Filtros basicos en `GET /api/projects`:
+  - `teamId`
+  - `status`
+  - `search`
+  - `ownerId`
 
 ### Falta Importante
 
-- Auditoria de proyectos.
-- Filtros o busqueda basica de proyectos, si aplica en frontend.
+- No hay pendientes funcionales criticos del Bloque 3.
+- Pendiente transversal:
+  - Probar manualmente endpoints.
+  - Agregar requests a Postman/Insomnia.
 
 ### Tareas Pequenas
 
 - Persona A:
-  - Crear auditoria de proyectos:
-    - create
-    - update
-    - status_change
-    - delete
+  - Probar auditoria de proyectos.
 - Persona B:
-  - Definir filtros/busqueda de proyectos que necesitara el frontend.
-  - Implementar query params si hacen falta.
+  - Probar filtros de `GET /api/projects`.
+  - Documentar ejemplos de query params.
 - Persona C:
   - Probar manualmente `GET /api/dashboard/summary`.
   - Ajustar metricas si el frontend necesita otro formato.

@@ -51,6 +51,36 @@ export const getProjects = async (userId) => {
   return projectLists.flat();
 };
 
+export const getFilteredProjects = async (userId, filters = {}) => {
+  const projects = await getProjects(userId);
+  const search = filters.search?.trim().toLowerCase();
+
+  return projects.filter((project) => {
+    if (filters.teamId && project.teamId !== filters.teamId) {
+      return false;
+    }
+
+    if (filters.status && project.status !== filters.status) {
+      return false;
+    }
+
+    if (filters.ownerId && project.ownerId !== filters.ownerId) {
+      return false;
+    }
+
+    if (search) {
+      const name = project.name?.toLowerCase() || '';
+      const description = project.description?.toLowerCase() || '';
+
+      if (!name.includes(search) && !description.includes(search)) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+};
+
 export const getProjectById = async (id, userId) => {
   const project = await repository.getProjectById(id);
 
