@@ -2,62 +2,69 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../../../config/firebase.js';
 
 const commentsCollectionName = 'comments';
-//forgot serializeDoc
+
 const serializeDoc = (doc) => {
   if (!doc.exists) return null;
+
   return {
     id: doc.id,
     ...doc.data(),
   };
 };
-// COMMENT
-export const postComment = async (commentData) => {
-  const tasksRef = db.collection(commentsCollectionName);
-  const docRef = await tasksRef.add({
+
+const isActiveComment = (comment) => comment.isDeleted !== true;
+
+export const createComment = async (commentData) => {
+  const docRef = await db.collection(commentsCollectionName).add({
     ...commentData,
+    isDeleted: false,
     createdAt: FieldValue.serverTimestamp(),
-  }
-  );
-  return { id: docRef.id, ...commentData };
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  const created = await docRef.get();
+
+  return serializeDoc(created);
 };
 
-export const getCommentById = async (id) =>   
-{
+export const getCommentById = async (id) => {
   const doc = await db.collection(commentsCollectionName).doc(id).get();
-
-  if (!doc.exists) {
-    return null;
-  }
 
   return serializeDoc(doc);
 };
 
-export const getCommentsByTaskId = async (taskId) =>
-{
-
+export const getCommentsByTaskId = async (taskId) => {
   const snapshot = await db
     .collection(commentsCollectionName)
     .where('taskId', '==', taskId)
     .get();
-  
-  if (snapshot.empty) 
-  {
+
+  if (snapshot.empty) {
     return [];
   }
 
   return snapshot.docs
-  .map(serializeDoc)
-  .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
+    .map(serializeDoc)
+    .filter(isActiveComment)
+    .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
 };
 
-export const deleteComment = async (id) => {
+export const updateComment = async (id, data) => {
   const docRef = db.collection(commentsCollectionName).doc(id);
-  const existing = await docRef.get();
 
-  if (!existing.exists) {
-    return null;
-  }
+  await docRef.update({
+    ...data,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
 
-  await docRef.delete();
-  return serializeDoc(existing);
+  const updated = await docRef.get();
+
+  return serializeDoc(updated);
+};
+
+export const deleteComment = async (id, userId) => {
+  return updateComment(id, {
+    isDeleted: true,
+    deletedAt: FieldValue.serverTimestamp(),
+    deletedBy: userId,
+  });
 };

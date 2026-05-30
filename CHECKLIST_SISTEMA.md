@@ -428,19 +428,26 @@ Falta:
   - `task.status` si la etapa destino tiene `mappedStatus`
 - Cambiar `stageId` desde `PUT /tasks/:id` ya sincroniza `stage.taskIds`.
 - Se valida que task/stage/chart/team sean compatibles al mover tareas.
+- CRUD de comentarios por tarea:
+  - `GET /api/tasks/:id/comments`
+  - `GET /api/tasks/:id/comments/:commentId`
+  - `POST /api/tasks/:id/comments`
+  - `PUT/PATCH /api/tasks/:id/comments/:commentId`
+  - `DELETE /api/tasks/:id/comments/:commentId`
+- Validacion de acceso a comentarios por membresia del equipo de la tarea.
+- Edicion/eliminacion de comentarios limitada al autor o OWNER/MANAGER del equipo.
+- Auditoria de comentarios:
+  - create
+  - update
+  - delete
 
 ### Falta Critico
 
-- Falta manejo real de subtareas o decidir posponerlo.
-- Faltan comentarios, obligatorios para TaskFlow:
-  - `GET /api/tasks/:id/comments`
-  - `POST /api/tasks/:id/comments`
-  - `PUT/PATCH /api/tasks/:id/comments/:commentId` si aplica
-  - `DELETE /api/tasks/:id/comments/:commentId` si aplica
+- Falta manejo real de subtareas. Se pospone por decision del equipo.
 - Faltan notificaciones, obligatorias para TaskFlow:
   - `GET /api/notifications`
   - `PATCH /api/notifications/read-all`
-- Falta auditoria de tareas/comentarios/notificaciones.
+- Falta auditoria de tareas/notificaciones.
 - Faltan filtros suficientes para aceptacion:
   - responsable
   - prioridad
@@ -454,10 +461,10 @@ Falta:
   - Probar que `PUT /tasks/:id` siga editando datos generales.
   - Probar que `PATCH /tasks/:id/status` no mueva columnas.
 - Persona B:
-  - Crear modulo `comments`.
-  - Crear endpoints de comentarios por tarea.
-  - Validar que solo miembros del proyecto/equipo puedan comentar/ver.
-  - Auditar comentarios.
+  - Probar CRUD de comentarios por tarea.
+  - Probar que solo miembros del equipo puedan comentar/ver.
+  - Probar que solo autor u OWNER/MANAGER puedan editar/eliminar.
+  - Probar auditoria de comentarios.
 - Persona C:
   - Crear modulo `notifications`.
   - Crear notificaciones al asignar tarea o cambiar estado.

@@ -14,7 +14,7 @@ import {
 } from './task.schema.js';
 import * as tasksController from './task.controller.js';
 import * as commentsController from './comments/comments.controller.js';
-import * as commentsSchema from './comments/comments.schema.js'
+import * as commentsSchema from './comments/comments.schema.js';
 
 const router = express.Router();
 
@@ -93,22 +93,44 @@ router.post(
 // Poner un comentario en la tarea
 router.post(
   '/:id/comments',
-  validate(commentsSchema.postParams, 'params'),
-  validate(commentsSchema.comment),
+  validate(commentsSchema.taskCommentParams, 'params'),
+  validate(commentsSchema.commentBody),
   commentsController.postComment
 );
 
 // Obtener los comentarios de la tarea
 router.get(
   '/:id/comments',
-  validate(commentsSchema.getParams, 'params'),
+  validate(commentsSchema.taskCommentParams, 'params'),
   commentsController.getCommentsByTaskId
 );
 
-// Borrar los comentarios de la tarea
+// Obtener un comentario de la tarea
+router.get(
+  '/:id/comments/:commentId',
+  validate(commentsSchema.taskCommentIdParams, 'params'),
+  commentsController.getCommentById
+);
+
+// Actualizar un comentario de la tarea
+router.put(
+  '/:id/comments/:commentId',
+  validate(commentsSchema.taskCommentIdParams, 'params'),
+  validate(commentsSchema.updateCommentBody),
+  commentsController.updateCommentById
+);
+
+router.patch(
+  '/:id/comments/:commentId',
+  validate(commentsSchema.taskCommentIdParams, 'params'),
+  validate(commentsSchema.updateCommentBody),
+  commentsController.updateCommentById
+);
+
+// Borrar un comentario de la tarea
 router.delete(
   '/:id/comments/:commentId',
-  validate(commentsSchema.deleteParams, 'params'),
+  validate(commentsSchema.taskCommentIdParams, 'params'),
   commentsController.deleteCommentById
 );
 
