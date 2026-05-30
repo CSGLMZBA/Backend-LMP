@@ -2,7 +2,14 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { db } from '../../../config/firebase.js';
 
 const commentsCollectionName = 'comments';
-
+//forgot serializeDoc
+const serializeDoc = (doc) => {
+  if (!doc.exists) return null;
+  return {
+    id: doc.id,
+    ...doc.data(),
+  };
+};
 // COMMENT
 export const postComment = async (commentData) => {
   const tasksRef = db.collection(commentsCollectionName);
@@ -27,11 +34,12 @@ export const getCommentById = async (id) =>
 
 export const getCommentsByTaskId = async (taskId) =>
 {
+
   const snapshot = await db
     .collection(commentsCollectionName)
     .where('taskId', '==', taskId)
     .get();
-
+  
   if (snapshot.empty) 
   {
     return [];
@@ -40,7 +48,7 @@ export const getCommentsByTaskId = async (taskId) =>
   return snapshot.docs
   .map(serializeDoc)
   .sort((a, b) => (b.createdAt?._seconds ?? 0) - (a.createdAt?._seconds ?? 0));
-}
+};
 
 export const deleteComment = async (id) => {
   const docRef = db.collection(commentsCollectionName).doc(id);

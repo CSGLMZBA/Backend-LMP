@@ -31,8 +31,9 @@ export const postComment = async (req, res) =>
   {
     const userId = req.user.id;
     const { id } = req.params;
+    const { content } = req.validatedData;
     const comment = await commentsService.postComment(id,userId,
-      req.validatedData
+      content
     );
 
     return successResponse(
@@ -101,7 +102,6 @@ export const getCommentsByTaskId = async (req, res) => {
     const { id } = req.params;
     
     const comments = await commentsService.getCommentsByTaskId(id, userId);
-
     return successResponse(
       res,
       'comments retrieved successfully',

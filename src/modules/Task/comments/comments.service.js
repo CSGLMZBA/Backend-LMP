@@ -1,7 +1,7 @@
 import * as tasksRepository from '../task.repository.js';
 import * as commentsRepository from './comments.repository.js';
 
-export const postComment = async (taskId,userId,data) => 
+export const postComment = async (taskId,userId,content) => 
 {
   const task = await tasksRepository.getTaskById(taskId);
   
@@ -19,7 +19,7 @@ export const postComment = async (taskId,userId,data) =>
     {
       taskId: taskId,
       posterId:userId,
-      contents: data.content
+      content: content
     }
   );
   return comment;
