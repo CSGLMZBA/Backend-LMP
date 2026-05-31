@@ -70,3 +70,5 @@ Roles iniciales:
 - `GET /api/roles`
 - `GET /api/permissions`
 - `GET /api/audit`
+
+## [Documentation](docs/INDEX.md)
