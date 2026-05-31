@@ -162,7 +162,7 @@ export const archiveTeam = async (teamId, userId) => {
   };
   const teamNotifData = {
     title: "Team Archived",
-    body: `The team "${team.name}" has been archived by one of the owners and has become inaccessible.`,
+    body: `The team "${team.name}" has been archived by one of the owners and is now inaccessible.`,
     type: 2,
   };
 
