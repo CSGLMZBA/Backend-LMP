@@ -2,7 +2,7 @@ import bcrypt from 'bcryptjs';
 import * as teamsRepository from './teams.repository.js';
 import { usersRepository } from '../users/users.repository.js';
 import { env } from '../../config/env.js';
-
+import * as notificationsController from '../notifications/notifications.controller.js'
 const removeSensitiveFields = (team) => {
   if (!team) return team;
 
@@ -122,6 +122,18 @@ export const updateTeam = async (teamId, data, userId) => {
 
   const updatedTeam = await teamsRepository.updateTeam(teamId, updateData);
 
+  if(data.name !== undefined && data.name !== team.name)
+  {
+    const currentMembers = await teamsRepository.getTeamMembersByTeamId(teamId);
+    const existingMemberIds = currentMembers.map(m => m.userId);  
+    const teamNotifData = {
+      title: "Team updated",
+      body: `The team "${team.name}" has been renamed to "${updatedTeam.name}".`,
+      type: 2,
+    };
+
+    await notificationsController.createNotificationMass(teamNotifData, existingMemberIds);
+  }
   return removeSensitiveFields(updatedTeam);
 };
 
@@ -137,6 +149,25 @@ export const archiveTeam = async (teamId, userId) => {
   }
 
   await assertTeamRole(teamId, userId, ['OWNER']);
+
+  
+  const currentMembers = await teamsRepository.getTeamMembersByTeamId(teamId);
+  const existingMemberIds = currentMembers.map(m => m.userId);  
+
+  const NotifData = 
+  {
+    title: "Team Archived",
+    body: `You have archived "${team.name}".`,
+    type: 2,
+  };
+  const teamNotifData = {
+    title: "Team Archived",
+    body: `The team "${team.name}" has been archived by one of the owners and has become inaccessible.`,
+    type: 2,
+  };
+
+  await notificationsController.createNotificationMass(NotifData,[userId]);
+  await notificationsController.createNotificationMass(teamNotifData, existingMemberIds);
 
   const archivedTeam = await teamsRepository.updateTeam(teamId, {
     status: 'ARCHIVED',
@@ -171,6 +202,23 @@ export const joinTeam = async (teamId, userId, password) => {
   if (!validPassword) {
     throw new Error('INVALID_TEAM_PASSWORD');
   }
+  const joiningUser = await usersRepository.findById(userId);
+  const currentMembers = await teamsRepository.getTeamMembersByTeamId(teamId);
+  const existingMemberIds = currentMembers.map(m => m.userId);
+    const notifData = 
+    {
+      title: "Team Joined",
+      body: `You\'ve joined "${team.name} as a member"`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(notifData,[userId]);
+  
+  const teamNotifData = {
+      title: "New Team Member",
+      body: `${joiningUser.displayName} has joined "${team.name}".`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(teamNotifData, existingMemberIds);
 
   return teamsRepository.createTeamMember({
     teamId,
@@ -221,7 +269,22 @@ export const addTeamMember = async (teamId, data, addedBy) => {
   if (existingMember) {
     throw new Error('USER_ALREADY_IN_TEAM');
   }
-
+  const user = await usersRepository.findById(data.userId);
+  const team = await teamsRepository.getTeamById(teamId);
+  const addedNotifData = 
+    {
+      title: "Added to a team",
+      body: `You\'ve been added to "${team.name}" as ${data.role}.`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(addedNotifData,[data.userId]);
+  const selfNotifData = 
+    {
+      title: "Added member",
+      body: `You\'ve added "${user.displayName}" to "${team.name}" as ${data.role}.`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(selfNotifData,[addedBy]);
   return teamsRepository.createTeamMember({
     teamId,
     userId: data.userId,
@@ -247,7 +310,14 @@ export const updateTeamMemberRole = async (teamId, userId, role, updatedBy) => {
       throw new Error('LAST_OWNER_ROLE_CANNOT_CHANGE');
     }
   }
-
+  const team = await teamsRepository.getTeamById(teamId);
+  const NotifData = 
+    {
+      title: "Role Change",
+      body: `You now have the role of ${role} on "${team.name}".`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(NotifData,[userId]);
   return teamsRepository.updateTeamMember(member.id, {
     role,
     updatedAt: new Date(),
@@ -273,7 +343,23 @@ export const removeTeamMember = async (teamId, userId, removedBy) => {
   }
 
   await teamsRepository.deleteTeamMember(member.id);
+  const team = await teamsRepository.getTeamById(teamId);
+  const user = await usersRepository.findById(userId);
+  const removedNotifData = 
+    {
+      title: "Removed from team",
+      body: `You\'ve been removed from "${team.name}".`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(removedNotifData,[userId]);
 
+  const selfNotifData = 
+    {
+      title: "Removed member",
+      body: `You\'ve removed "${user.displayName}" from "${team.name}".`,
+      type: 2,
+    };
+  await notificationsController.createNotificationMass(selfNotifData,[removedBy]);
   return {
     removed: true,
     memberId: member.id,

@@ -86,7 +86,13 @@ export const login = async (req, res) => {
         role: result.user.role,
       },
     });
-
+    const notifData = 
+    {
+      title: "Login Alert",
+      body: `${result.user.displayName} (@${result.user.userName}) logged into your account successfully`,
+      type: 2,
+    }
+    await notificationsController.createNotificationMass(notifData,[result.user.id]);
     return successResponse(
       res,
       'Login successfull',
@@ -113,6 +119,7 @@ export const login = async (req, res) => {
     }
 
     if (error.message === 'ACCOUNT_LOCKED') {
+
       return errorResponse(
         res,
         'Account locked due to too many failed login attempts',
@@ -195,7 +202,7 @@ export const updatePassword = async (req, res) => {
     const notifData = 
     {
       title: "Password changed",
-      body: `Hello ${result.userName} your password has been changed successfully`,
+      body: `Hello ${result.displayName} your password has been changed successfully`,
       type: 2,
     }
     await notificationsController.createNotificationMass(notifData,[userId]);

@@ -4,6 +4,7 @@ import {
   errorResponse,
 } from '../../utils/response.js';
 import { recordAudit } from '../../middleware/audit.middleware.js';
+import * as notificationsController from '../notifications/notifications.controller.js'
 
 export const createTeam = async (req, res) => {
   try {
@@ -23,7 +24,13 @@ export const createTeam = async (req, res) => {
         name: team.name,
       },
     });
-
+    const notifData = 
+    {
+      title: "Team Created",
+      body: `Your team "${team.name}" was succesfully created`,
+      type: 2,
+    };
+    await notificationsController.createNotificationMass(notifData,[userId]);
     return successResponse(
       res,
       'Team created successfully',

@@ -4,6 +4,7 @@ import { userRepository } from './auth.repository.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../../utils/jwt.js';
 
 import { env } from '../../config/env.js';
+import * as notificationsController from '../notifications/notifications.controller.js'
 
 const removeSensitiveFields = (data) => {
   if (!data) return data;
@@ -73,6 +74,14 @@ export const login = async (data) => {
     const updatedUser = await userRepository.incrementLoginAttempts(user.id);
 
     if ((updatedUser.loginAttempts || 0) >= MAX_LOGIN_ATTEMPTS) {
+      const notifData = 
+      {
+        title: "ACCOUNT LOCKED",
+        body: `${updatedUser.displayName} (@${updatedUser.userName}) we detected multiple failed login attempts into your account causing it to become locked, for more information contact an admninistrator.`,
+        type: 5,
+      } 
+      await notificationsController.createNotificationMass(notifData,[user.id]);
+      
       await userRepository.lockUser(user.id);
       throw new Error('ACCOUNT_LOCKED');
     }
